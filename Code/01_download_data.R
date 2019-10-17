@@ -2,16 +2,17 @@
 ### code written by Katelyn King 16-OCT-2019 
 ### code adapted from Bobby Hensley ### 
 
-### load libraries ###
+#### load libraries ####
 # install neonUtilities
 install.packages("neonUtilities")
 # load neonUtilities
 library(neonUtilities)
 ?loadByProduct
 ?getDatatable
+library(ggplot2)
+library(dplyr)
 
-
-### load datasets ###
+#### load datasets ####
 ## avg: "all" to download all data (default), or number of minutes in the averaging interval. 
 ##      only applicable to IS data.
 
@@ -33,27 +34,83 @@ library(neonUtilities)
 ##      20016.001 = elevation of surface water
 ##      20288.001 = water quality
 ##      20033.001 = nitrate in surface water
+##      20092.001 = groundwater 
+##      20163.001 = chl
+##      20276 = isotopes in groundwater
 
 #Water quality Sensor data
-#In situ sensor-based specific conductivity, concentration of chlorophyll a, dissolved oxygen content, fDOM concentration, pH, and turbidity, available as one-, five-, and thirty-minute averages in surface water of lakes, wadeable streams, and non-wadeable streams.
+#In situ sensor-based specific conductivity, concentration of chlorophyll a, dissolved oxygen content, fDOM concentration (fluorescent dissolved material), pH, and turbidity 
+#available as one-, five-, and thirty-minute averages in surface water 
 waterchem_sensor <- loadByProduct(dpID="DP1.20288.001", 
                            site=c("MOAB","ONAQ"),
                            startdate="2018-05",  #year and month
                            enddate="2018-08")
 
-#Grab samples of surface water chemistry including general chemistry, anions, cations, and nutrients.
+#Grab samples of surface water chemistry including general chemistry (DOC), anions, cations, and nutrients. streams 26 times per year
 nutrients_grab <- loadByProduct(dpID="DP1.20093.001", 
-                           site=c("MOAB","ONAQ"),
-                           startdate="2018-05", 
-                           enddate="2018-08", 
+                           site=c(
+                             'HOPB','POSE','KING', 'WALK','LECO','MAYF','PRIN',
+                             'BLDE','COMO','MART', 'BIGC','CARI'),
+                           startdate="2012-01", 
+                           enddate="2019-09", 
                            package="expanded", #basic will just give you concentrations, #expanded will give you flags 
                            check.size = T)  ### check the size of the file before you download it 
 
 
-# Creates data frames from tables 
-for(i in 1:length(wq)) {assign(names(wq)[i], wq[[i]])}
-View(waq_instantaneous)
-wqvalues<-data.frame(waq_instantaneous)
+# Turn data into a dataframe (can I use the get datatable function?)
+for(i in 1:length(nutrients_grab)) {assign(names(nutrients_grab)[i], nutrients_grab[[i]])}   #calls the table waq_instances
+grab_dat<-as.data.frame(swc_externalLabData)
+
+write.csv(grab_dat, 'Data/surface_water_grab.csv', row.names = FALSE)
+
+#### Graphing for exploring variation across sites #### 
+#graph bar plot with error bars 
+#pH 
+my_pH <- grab_dat %>%
+  group_by(siteID) %>%
+  summarise( 
+    n=n(),
+    mean=mean(pH, na.rm=TRUE),
+    sd=sd(pH, na.rm=TRUE)
+  )
+
+print(ggplot(my_pH) +
+  geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
+  geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
+  ylab("pH")
+
+# conductivity
+my_con <- grab_dat %>%
+  group_by(siteID) %>%
+  summarise( 
+    n=n(),
+    mean=mean(externalConductance, na.rm=TRUE),
+    sd=sd(externalConductance, na.rm=TRUE)
+  )
+
+ggplot(my_con) +
+  geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
+  geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)
+
+# waterCalcium
+my_con <- grab_dat %>%
+  group_by(siteID) %>%
+  summarise( 
+    n=n(),
+    mean=mean(externalConductance, na.rm=TRUE),
+    sd=sd(externalConductance, na.rm=TRUE)
+  )
+
+ggplot(my_con) +
+  geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
+  geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)
+#waterMagnesium
+#"totalSuspendedSolids" 
+#"waterNitriteN"  
+#"dissolvedInorganicCarbon"    
+# "dissolvedOrganicCarbon"      
+#"waterTotalOrganicCarbon" 
+#"uvAbsorbance250" 
 
 #### Seperates measurements by location 
 ##  Upstream = 101              Downstream = 102
