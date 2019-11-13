@@ -64,6 +64,9 @@ grab_dat<-as.data.frame(swc_externalLabData)
 write.csv(grab_dat, 'Data/surface_water_grab.csv', row.names = FALSE)
 
 #### Graphing for exploring variation across sites #### 
+#read in data 
+grab_dat<-read.csv('Data/surface_water_grab.csv', header = TRUE)
+
 #graph bar plot with error bars 
 #pH 
 my_pH <- grab_dat %>%
