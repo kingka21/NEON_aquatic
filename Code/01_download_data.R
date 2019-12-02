@@ -3,7 +3,7 @@
 ### code adapted from Bobby Hensley ### 
 
 #### load libraries ####
-# install neonUtilities
+# install neonUtilities if you have not already 
 install.packages("neonUtilities")
 # load neonUtilities
 library(neonUtilities)
@@ -46,11 +46,14 @@ waterchem_sensor <- loadByProduct(dpID="DP1.20288.001",
                            startdate="2018-05",  #year and month
                            enddate="2018-08")
 
-#Grab samples of surface water chemistry including general chemistry (DOC), anions, cations, and nutrients. streams 26 times per year
+#All 27 sites: Grab samples of surface water chemistry including general chemistry (DOC), anions, cations, and nutrients. streams 26 times per year
 nutrients_grab <- loadByProduct(dpID="DP1.20093.001", 
                            site=c(
                              'HOPB','POSE','KING', 'WALK','LECO','MAYF','PRIN',
-                             'BLDE','COMO','MART', 'BIGC','CARI'),
+                             'BLDE','COMO','MART', 'BIGC','CARI', 'WLOU', "FLNT", 
+                             "MCDI", 'LEWI', "BLUE", "TECR", "REDB", "SYCA", 
+                             "MCRA", "OKSR", "ARIK", "GUIL", "CUPE", "TOMB", "BLWA"
+                           ),
                            startdate="2012-01", 
                            enddate="2019-09", 
                            package="expanded", #basic will just give you concentrations, #expanded will give you flags 
@@ -59,7 +62,10 @@ nutrients_grab <- loadByProduct(dpID="DP1.20093.001",
 
 # Turn data into a dataframe (can I use the get datatable function?)
 for(i in 1:length(nutrients_grab)) {assign(names(nutrients_grab)[i], nutrients_grab[[i]])}   #calls the table waq_instances
-grab_dat<-as.data.frame(swc_externalLabData)
+grab_chem_dat<-as.data.frame(swc_externalLabData) #table that has water chem
+grab_info_dat<-as.data.frame(swc_fieldSuperParent) #table that has lat/lon and elevation, DO, waterTemp, maxDepth
+
+
 
 write.csv(grab_dat, 'Data/surface_water_grab.csv', row.names = FALSE)
 
