@@ -66,8 +66,8 @@ grab_chem_dat<-as.data.frame(swc_externalLabData) #table that has water chem
 grab_info_dat<-as.data.frame(swc_fieldSuperParent) #table that has lat/lon and elevation, DO, waterTemp, maxDepth
 
 
-
-write.csv(grab_dat, 'Data/surface_water_grab.csv', row.names = FALSE)
+write.csv(grab_chem_dat, 'Data/surface_water_grab.csv', row.names = FALSE)
+write.csv(grab_info_dat, 'Data/grab_info.csv', row.names = FALSE)
 
 #### Graphing for exploring variation across sites #### 
 #read in data 
@@ -86,7 +86,7 @@ my_pH <- grab_dat %>%
 print(ggplot(my_pH) +
   geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
   geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
-  ylab("pH")
+  ylab("pH") + theme(axis.text.x = element_text(angle = 90))
 
 # conductivity
 my_con <- grab_dat %>%
@@ -99,27 +99,83 @@ my_con <- grab_dat %>%
 
 ggplot(my_con) +
   geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
-  geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)
+  geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3) +
+  theme(axis.text.x = element_text(angle = 90)) +
+  ylab("conductivity")
 
-# waterCalcium
-my_con <- grab_dat %>%
+# "totalSuspendedSolids"
+my_tss <- grab_dat %>%
   group_by(siteID) %>%
   summarise( 
     n=n(),
-    mean=mean(externalConductance, na.rm=TRUE),
-    sd=sd(externalConductance, na.rm=TRUE)
+    mean=mean(totalSuspendedSolids, na.rm=TRUE),
+    sd=sd(totalSuspendedSolids, na.rm=TRUE)
   )
 
-ggplot(my_con) +
-  geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
-  geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)
-#waterMagnesium
-#"totalSuspendedSolids" 
+print(ggplot(my_tss) +
+        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
+        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
+  ylab("tss") + theme(axis.text.x = element_text(angle = 90))
+
 #"waterNitriteN"  
-#"dissolvedInorganicCarbon"    
-# "dissolvedOrganicCarbon"      
+my_N <- grab_dat %>%
+  group_by(siteID) %>%
+  summarise( 
+    n=n(),
+    mean=mean(waterNitriteN, na.rm=TRUE),
+    sd=sd(waterNitriteN, na.rm=TRUE)
+  )
+
+print(ggplot(my_N) +
+        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
+        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
+  ylab("nitrite") + theme(axis.text.x = element_text(angle = 90))
+
 #"waterTotalOrganicCarbon" 
+my_orgcarbon <- grab_dat %>%
+  group_by(siteID) %>%
+  summarise( 
+    n=n(),
+    mean=mean(waterTotalOrganicCarbon, na.rm=TRUE),
+    sd=sd(waterTotalOrganicCarbon, na.rm=TRUE)
+  )
+
+print(ggplot(my_orgcarbon) +
+        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
+        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
+  ylab("orgcarbon") + theme(axis.text.x = element_text(angle = 90))
+
+
+#"dissolvedInorganicCarbon"  
+my_inorgcarbon <- grab_dat %>%
+  group_by(siteID) %>%
+  summarise( 
+    n=n(),
+    mean=mean(dissolvedInorganicCarbon, na.rm=TRUE),
+    sd=sd(dissolvedInorganicCarbon, na.rm=TRUE)
+  )
+
+print(ggplot(my_inorgcarbon) +
+        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
+        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
+  ylab("inorganic carbon") + theme(axis.text.x = element_text(angle = 90))
+
+# "dissolvedOrganicCarbon"      
+my_diss_org_C <- grab_dat %>%
+  group_by(siteID) %>%
+  summarise( 
+    n=n(),
+    mean=mean(dissolvedOrganicCarbon, na.rm=TRUE),
+    sd=sd(dissolvedOrganicCarbon, na.rm=TRUE)
+  )
+
+print(ggplot(my_diss_org_C) +
+        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
+        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
+  ylab("dissolved organic carbon") + theme(axis.text.x = element_text(angle = 90))
+
 #"uvAbsorbance250" 
+#waterMagnesium
 
 #### Seperates measurements by location 
 ##  Upstream = 101              Downstream = 102
