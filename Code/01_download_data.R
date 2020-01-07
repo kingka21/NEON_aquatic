@@ -65,14 +65,31 @@ for(i in 1:length(nutrients_grab)) {assign(names(nutrients_grab)[i], nutrients_g
 grab_chem_dat<-as.data.frame(swc_externalLabData) #table that has water chem
 grab_info_dat<-as.data.frame(swc_fieldSuperParent) #table that has lat/lon and elevation, DO, waterTemp, maxDepth
 
-
 write.csv(grab_chem_dat, 'Data/surface_water_grab.csv', row.names = FALSE)
 write.csv(grab_info_dat, 'Data/grab_info.csv', row.names = FALSE)
 
-#### Graphing for exploring variation across sites #### 
-#read in data 
-grab_dat<-read.csv('Data/surface_water_grab.csv', header = TRUE)
 
+#read in chem data and info for each site to do analysis or graph #note sampleID and parentSampleID are the identifiers to join
+grab_dat<-read.csv('Data/surface_water_grab.csv', header = TRUE)
+grab_info<-read.csv('Data/grab_info.csv', header = TRUE)
+
+### Extracts date only to a new column 
+grab_dat$DATE<-as.Date(grab_dat$collectDate,format="%Y-%m-%d")
+
+#### exploring variation within a site across years (temporal) #### 
+HOPB<- filter(grab_dat, siteID == "HOPB")
+plot(HOPB$DATE, HOPB$waterTotalOrganicCarbon, type='l')  
+
+#all sites 
+ggplot(data = grab_dat, aes(x=DATE, y=waterTotalOrganicCarbon)) + geom_line(aes(colour=siteID))
+
+#select out only 2016-current #seems to messy to actually use 
+grab_dat$YEAR<-lubridate::year(grab_dat$DATE)
+recent_years<-filter(grab_dat, YEAR >= 2016)
+ggplot(data = recent_years, aes(x=DATE, y=waterTotalOrganicCarbon)) + geom_line(aes(colour=siteID))
+
+
+#### Graphing for exploring variation across sites (spatial) #### 
 #graph bar plot with error bars 
 #pH 
 my_pH <- grab_dat %>%
@@ -177,6 +194,8 @@ print(ggplot(my_diss_org_C) +
 #"uvAbsorbance250" 
 #waterMagnesium
 
+
+##### other tips from Bobby 
 #### Seperates measurements by location 
 ##  Upstream = 101              Downstream = 102
 ##  US overhanging = 111        DS overhanging = 112
@@ -186,10 +205,6 @@ print(ggplot(my_diss_org_C) +
 ##  NOTE: function removes values, so enter term for locations you DON'T want
 wqvalues101<-wqvalues[(wqvalues$horizontalPosition=="101"),]
 wqvalues102<-wqvalues[(wqvalues$horizontalPosition=="102"),]
-
-### Extracts datetime and converts datetime string to POSIXct
-wqvalues101$startDateTime<-as.POSIXct(wqvalues101$startDateTime,format="%Y-%m-%dT%H:%M:%OS")
-wqvalues102$startDateTime<-as.POSIXct(wqvalues102$startDateTime,format="%Y-%m-%dT%H:%M:%OS")
 
 ### Plots data ###
 plot(wqvalues101$startDateTime,wqvalues101$dissolvedOxygen,type="l",col="blue",main="ARIK DO",xlab="Date",ylab="DO (mg/L)")
