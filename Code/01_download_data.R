@@ -36,15 +36,19 @@ library(dplyr)
 ##      20033.001 = nitrate in surface water
 ##      20092.001 = groundwater 
 ##      20163.001 = chl
-##      20276 = isotopes in groundwater
+##      20206.001 = isotopes in surface water 
+##      20276.001 = isotopes in groundwater
+##      20048.001 = manual discharge measures (about 26/year/site)
 
-#Water quality Sensor data
+#Water quality Sensor data EXAMPLE! 
 #In situ sensor-based specific conductivity, concentration of chlorophyll a, dissolved oxygen content, fDOM concentration (fluorescent dissolved material), pH, and turbidity 
 #available as one-, five-, and thirty-minute averages in surface water 
 waterchem_sensor <- loadByProduct(dpID="DP1.20288.001", 
                            site=c("MOAB","ONAQ"),
                            startdate="2018-05",  #year and month
-                           enddate="2018-08")
+                           enddate="2018-08" ,
+                           check.size = T , 
+                           avg= "30") # 'all', or the averaging interval to download, in minutes. Only applicable to sensor data.
 
 #All 27 sites: Grab samples of surface water chemistry including general chemistry (DOC), anions, cations, and nutrients. streams 26 times per year
 nutrients_grab <- loadByProduct(dpID="DP1.20093.001", 
@@ -57,7 +61,46 @@ nutrients_grab <- loadByProduct(dpID="DP1.20093.001",
                            startdate="2012-01", 
                            enddate="2019-09", 
                            package="expanded", #basic will just give you concentrations, #expanded will give you flags 
-                           check.size = T)  ### check the size of the file before you download it 
+                           check.size = F)  ### check the size of the file before you download it 
+
+#get chl-a data from surface water grab smaples 
+chl_grab <- loadByProduct(dpID="DP1.20163.001", 
+                                site=c(
+                                  'HOPB','POSE','KING', 'WALK','LECO','MAYF','PRIN',
+                                  'BLDE','COMO','MART', 'BIGC','CARI', 'WLOU', "FLNT", 
+                                  "MCDI", 'LEWI', "BLUE", "TECR", "REDB", "SYCA", 
+                                  "MCRA", "OKSR", "ARIK", "GUIL", "CUPE", "TOMB", "BLWA"
+                                ),
+                                startdate="2012-01", 
+                                enddate="2019-09", 
+                                package="expanded", #basic will just give you concentrations, #expanded will give you flags 
+                                check.size = F)  ### check the size of the file before you download it 
+
+#get isotope data from surface water grab smaples 
+iso_grab <- loadByProduct(dpID="DP1.20206.001", 
+                          site=c(
+                            'HOPB','POSE','KING', 'WALK','LECO','MAYF','PRIN',
+                            'BLDE','COMO','MART', 'BIGC','CARI', 'WLOU', "FLNT", 
+                            "MCDI", 'LEWI', "BLUE", "TECR", "REDB", "SYCA", 
+                            "MCRA", "OKSR", "ARIK", "GUIL", "CUPE", "TOMB", "BLWA"
+                          ),
+                          startdate="2012-01", 
+                          enddate="2019-09", 
+                          package="expanded", #basic will just give you concentrations, #expanded will give you flags 
+                          check.size = F)  ### check the size of the file before you download it 
+
+#get discharge data which was taken manually  
+discharge_grab <- loadByProduct(dpID="DP1.20048.001", 
+                          site=c(
+                            'HOPB','POSE','KING', 'WALK','LECO','MAYF','PRIN',
+                            'BLDE','COMO','MART', 'BIGC','CARI', 'WLOU', "FLNT", 
+                            "MCDI", 'LEWI', "BLUE", "TECR", "REDB", "SYCA", 
+                            "MCRA", "OKSR", "ARIK", "GUIL", "CUPE", "TOMB", "BLWA"
+                          ),
+                          startdate="2012-01", 
+                          enddate="2019-09", 
+                          package="expanded", #basic will just give you concentrations, #expanded will give you flags 
+                          check.size = F)  ### check the size of the file before you download it 
 
 
 # Turn data into a dataframe (can I use the get datatable function?)
@@ -65,16 +108,48 @@ for(i in 1:length(nutrients_grab)) {assign(names(nutrients_grab)[i], nutrients_g
 grab_chem_dat<-as.data.frame(swc_externalLabData) #table that has water chem
 grab_info_dat<-as.data.frame(swc_fieldSuperParent) #table that has lat/lon and elevation, DO, waterTemp, maxDepth
 
+for(i in 1:length(chl_grab)) {assign(names(chl_grab)[i], chl_grab[[i]])}   #calls the table 
+grab_chl_dat<-as.data.frame(alg_algaeExternalLabDataPerSample) #table that has total chlorophyll a and chlorophyll a (dont know the diff right now)
+
+for(i in 1:length(discharge_grab)) {assign(names(discharge_grab)[i], discharge_grab[[i]])}   #calls the table waq_instances
+grab_discharge_dat<-as.data.frame(dsc_fieldData) #table that has total discharge in cubic meters per sec 
+
 write.csv(grab_chem_dat, 'Data/surface_water_grab.csv', row.names = FALSE)
 write.csv(grab_info_dat, 'Data/grab_info.csv', row.names = FALSE)
+write.csv(grab_chl_dat, 'Data/surface_water_chla_grab.csv', row.names = FALSE)
+write.csv(grab_discharge_dat, 'Data/grab_discharge.csv', row.names = FALSE)
 
 
-#read in chem data and info for each site to do analysis or graph #note sampleID and parentSampleID are the identifiers to join
+#############################################################
+#### read in saved data and do some exploratory analysis #### 
+#############################################################
+
+#read in chem data and info for each site to do analysis or graph 
+#note sampleID in grab_dat and parentSampleID in grab_info are the identifiers to join
 grab_dat<-read.csv('Data/surface_water_grab.csv', header = TRUE)
 grab_info<-read.csv('Data/grab_info.csv', header = TRUE)
+grab_chl<-read.csv('Data/surface_water_chla_grab.csv', header = TRUE) ##maybe named location can help join?
+grab_discharge<-read.csv('Data/grab_discharge.csv', header = TRUE)
 
 ### Extracts date only to a new column 
 grab_dat$DATE<-as.Date(grab_dat$collectDate,format="%Y-%m-%d")
+grab_discharge$DATE<-as.Date(grab_discharge$collectDate,format="%Y-%m-%d")
+
+### select out only needed columns from these tables and join all tables into one 
+grab_dat<-subset(grab_dat, select = -c(namedLocation, collectDate, laboratoryName, coolerTemp, #this function you list columns to remove
+                                       sampleCondition, remarks, shipmentWarmQF, externalLabDataQF, 
+                                       receivedBy, shipmentCondition, shipmentLateQF)) 
+grab_info<-select(grab_info, decimalLatitude, decimalLongitude, elevation, parentSampleID, dissolvedOxygen, specificConductance, waterTemp)
+grab_discharge<-select(grab_discharge, siteID, DATE, totalDischarge)
+grab_chl<-select(grab_chl, siteID, collectDate, analyte, analyteConcentration) # function lists columns that I want to save
+## need to rotate table with chl data and select out chla
+grab_chl2<-tidyr::pivot_wider(grab_chl, id_cols = c(siteID,collectDate), names_from = analyte,
+            values_from = analyteConcentration)  ### need to figure out which site along the reach to choose
+
+#join tables into one big table 
+sw_data<-left_join(grab_dat, grab_info, by = c("sampleID" = "parentSampleID")) 
+test <-left_join(grab_dat, grab_discharge, by = c("siteID", "DATE")) #want to mach observances by site and date
+
 
 #### exploring variation within a site across years (temporal) #### 
 HOPB<- filter(grab_dat, siteID == "HOPB")
