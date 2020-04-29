@@ -7,8 +7,6 @@
 install.packages("neonUtilities")
 # load neonUtilities
 library(neonUtilities)
-?loadByProduct
-?getDatatable
 library(ggplot2)
 library(dplyr)
 
@@ -35,21 +33,78 @@ library(dplyr)
 ##      20288.001 = water quality
 ##      20033.001 = nitrate in surface water
 ##      20092.001 = groundwater 
-##      20163.001 = chl
-##      20206.001 = isotopes in surface water 
+##      20163.001 = chl in grab
+##      20206.001 = isotopes in surface water grab 
 ##      20276.001 = isotopes in groundwater
 ##      20048.001 = manual discharge measures (about 26/year/site)
 
-#Water quality Sensor data EXAMPLE! 
+####Water quality SENSOR DATA ####
 #In situ sensor-based specific conductivity, concentration of chlorophyll a, dissolved oxygen content, fDOM concentration (fluorescent dissolved material), pH, and turbidity 
 #available as one-, five-, and thirty-minute averages in surface water 
 waterchem_sensor <- loadByProduct(dpID="DP1.20288.001", 
-                           site=c("MOAB","ONAQ"),
-                           startdate="2018-05",  #year and month
-                           enddate="2018-08" ,
+                           site=c('HOPB','POSE','KING', 'WALK','LECO','MAYF','PRIN',
+                                  'BLDE','COMO','MART', 'BIGC','CARI', 'WLOU', "FLNT", 
+                                  "MCDI", 'LEWI', "BLUE", "TECR", "REDB", "SYCA", 
+                                  "MCRA", "OKSR", "ARIK", "GUIL", "CUPE", "TOMB", "BLWA"
+                           ),
+                           startdate="2019-01",  #year and month
+                           enddate="2019-12" ,
+                           package="basic",
                            check.size = T , 
-                           avg= "30") # 'all', or the averaging interval to download, in minutes. Only applicable to sensor data.
+                           avg= 'all') # 'all', or the averaging interval to download, in minutes. Only applicable to sensor data.
 
+
+#specificConductance, dissolvedOxygen, pH, chlorophyll, turbidity,fDOM, nitrate? water level? isotopes?  temp? 
+for(i in 1:length(waterchem_sensor)) {assign(names(waterchem_sensor)[i], waterchem_sensor[[i]])}   #calls the table 
+#table with data is waq_instantaneous 
+
+#extract date and time to a different format 
+waq_instantaneous$startDateTime<-as.POSIXct(waq_instantaneous$startDateTime,format="%Y-%m-%dT%H:%M:%OS")
+
+#put year, day, month and time in a different column?! 
+format(as.Date(dates), "%Y-%m")
+waq_instantaneous$DATE<-as.Date(waq_instantaneous$startDateTime,format="%Y-%m-%d")
+waq_instantaneous$YEAR<-format(waq_instantaneous$startDateTime,format="%Y")
+waq_instantaneous$MONTH<-format(waq_instantaneous$startDateTime,format="%m")
+waq_instantaneous$DAY<-format(waq_instantaneous$startDateTime,format="%d")
+
+write.csv(waq_instantaneous, 'Data/surface_water_sensor.csv', row.names = FALSE)
+
+# exploring temporal variation at one site
+CARI<- filter(waq_instantaneous, siteID == "CARI")
+JULY<-filter(CARI, MONTH == "07")
+plot(JULY$startDateTime, JULY$specificConductance,  main = "CARDI - conductivity")  
+plot(JULY$startDateTime, JULY$dissolvedOxygen,  main = "CARDI - dissolvedOxygen")  
+plot(JULY$startDateTime, JULY$chlorophyll,  main = "CARDI - chlorophyll")  
+ARIK<-filter(waq_instantaneous, siteID == "ARIK")
+HOPB<- filter(waq_instantaneous, siteID == "HOPB")
+plot(HOPB$startDateTime, HOPB$specificConductance,  main = "HOPB - conductivity")
+plot(ARIK$startDateTime, ARIK$chlorophyll,  main = "ARIK - chlorophyll")
+
+
+#'POSE','KING', 'WALK','LECO','MAYF','PRIN',
+#'BLDE','COMO','MART', 'BIGC','CARI', 'WLOU', "FLNT", 
+#"MCDI", 'LEWI', "BLUE", "TECR", "REDB", "SYCA", 
+#"MCRA", "OKSR", "ARIK", "GUIL", "CUPE", "TOMB", "BLWA"
+
+#daily averages 
+sensor_cond <- CARI %>%
+  group_by(DAY) %>%
+  summarise( 
+    n=n(),
+    mean=mean(specificConductance, na.rm=TRUE)
+  )
+
+test<-aggregate(waq_instantaneous$specificConductance,list(waq_instantaneous$MONTH),mean)
+ 
+
+#all sites 
+ggplot(data = waq_instantaneous, aes(x=DAY, y=specificConductance)) + geom_point(aes(colour=siteID))
+
+
+
+
+#### GRAB SAMPLES #### 
 #All 27 sites: Grab samples of surface water chemistry including general chemistry (DOC), anions, cations, and nutrients. streams 26 times per year
 nutrients_grab <- loadByProduct(dpID="DP1.20093.001", 
                            site=c(
@@ -128,7 +183,7 @@ write.csv(grab_discharge_dat, 'Data/grab_discharge.csv', row.names = FALSE)
 #note sampleID in grab_dat and parentSampleID in grab_info are the identifiers to join
 grab_dat<-read.csv('Data/surface_water_grab.csv', header = TRUE)
 grab_info<-read.csv('Data/grab_info.csv', header = TRUE)
-grab_chl<-read.csv('Data/surface_water_chla_grab.csv', header = TRUE) ##maybe named location can help join?
+grab_chl<-read.csv('Data/surface_water_chla_grab.csv', header = TRUE) 
 grab_discharge<-read.csv('Data/grab_discharge.csv', header = TRUE)
 
 ### Extracts date only to a new column 
@@ -136,38 +191,105 @@ grab_dat$DATE<-as.Date(grab_dat$collectDate,format="%Y-%m-%d")
 grab_discharge$DATE<-as.Date(grab_discharge$collectDate,format="%Y-%m-%d")
 
 ### select out only needed columns from these tables and join all tables into one 
-grab_dat<-subset(grab_dat, select = -c(namedLocation, collectDate, laboratoryName, coolerTemp, #this function you list columns to remove
+grab_dat<-subset(grab_dat, select = -c(collectDate, laboratoryName, coolerTemp, #this function you list columns to remove
                                        sampleCondition, remarks, shipmentWarmQF, externalLabDataQF, 
                                        receivedBy, shipmentCondition, shipmentLateQF)) 
 grab_info<-select(grab_info, decimalLatitude, decimalLongitude, elevation, parentSampleID, dissolvedOxygen, specificConductance, waterTemp)
 grab_discharge<-select(grab_discharge, siteID, DATE, totalDischarge)
-grab_chl<-select(grab_chl, siteID, collectDate, analyte, analyteConcentration) # function lists columns that I want to save
+grab_chl<-select(grab_chl, uid, siteID, collectDate, namedLocation, analyte, analyteConcentration) # function lists columns that I want to save
 ## need to rotate table with chl data and select out chla
-grab_chl2<-tidyr::pivot_wider(grab_chl, id_cols = c(siteID,collectDate), names_from = analyte,
-            values_from = analyteConcentration)  ### need to figure out which site along the reach to choose
+grab_chl2<-tidyr::pivot_wider(grab_chl, id_cols = c(uid, siteID, collectDate, namedLocation), names_from = analyte,
+            values_from = analyteConcentration)
+data.table::setnames(grab_chl2, "total chlorophyll a", "Tchla")
+data.table::setnames(grab_chl2, "chlorophyll a", "chla")
+grab_chl2$DATE<-as.Date(grab_chl2$collectDate,format="%Y-%m-%d")
+grab_chl2<-select(grab_chl2, siteID, DATE, namedLocation, Tchla, chla) 
+grab_chl3<-grab_chl2[!with(grab_chl2,is.na(Tchla)& is.na(chla)),] #get rid of rows with NAs in both columns
+grab_chl3$Tchla[is.na(grab_chl3$Tchla)] <- grab_chl3$chla[is.na(grab_chl3$Tchla)] #fill in the NA of Tchla with the values from Chla
 
-#join tables into one big table 
-sw_data<-left_join(grab_dat, grab_info, by = c("sampleID" = "parentSampleID")) 
-test <-left_join(grab_dat, grab_discharge, by = c("siteID", "DATE")) #want to mach observances by site and date
-
+#join tables into one big table #want to mach observances by site and date
+sw_data<-left_join(grab_dat, grab_info, by = c("sampleID" = "parentSampleID")) %>%
+  left_join(grab_discharge, by = c("siteID", "DATE")) %>%
+  left_join(grab_chl3,  by = c("siteID", "DATE", "namedLocation"))
 
 #### exploring variation within a site across years (temporal) #### 
-HOPB<- filter(grab_dat, siteID == "HOPB")
-plot(HOPB$DATE, HOPB$waterTotalOrganicCarbon, type='l')  
+CARI<- filter(sw_data, siteID == "CARI")
+plot(CARI$DATE, CARI$totalDischarge)  
 
 #all sites 
-ggplot(data = grab_dat, aes(x=DATE, y=waterTotalOrganicCarbon)) + geom_line(aes(colour=siteID))
+ggplot(data = sw_data, aes(x=DATE, y=totalDischarge)) + geom_point(aes(colour=siteID))
 
 #select out only 2016-current #seems to messy to actually use 
-grab_dat$YEAR<-lubridate::year(grab_dat$DATE)
-recent_years<-filter(grab_dat, YEAR >= 2016)
-ggplot(data = recent_years, aes(x=DATE, y=waterTotalOrganicCarbon)) + geom_line(aes(colour=siteID))
+sw_data$YEAR<-lubridate::year(sw_data$DATE)
+recent_years<-filter(sw_data, YEAR >= 2016)
+ggplot(data = recent_years, aes(x=DATE, y=totalDischarge)) + geom_point(aes(colour=siteID))
 
 
 #### Graphing for exploring variation across sites (spatial) #### 
 #graph bar plot with error bars 
+#DO
+my_DO <- sw_data %>%
+  group_by(siteID) %>%
+  summarise( 
+    n=n(),
+    mean=mean(dissolvedOxygen, na.rm=TRUE),
+    sd=sd(dissolvedOxygen, na.rm=TRUE)
+  )
+
+print(ggplot(my_DO) +
+        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
+        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
+  ylab("DO") + theme(axis.text.x = element_text(angle = 90))
+
+
+#nitrate/nitrite
+my_NN <- sw_data %>%
+  group_by(siteID) %>%
+  summarise( 
+    n=n(),
+    mean=mean(waterNitrateAndNitriteN, na.rm=TRUE),
+    sd=sd(waterNitrateAndNitriteN, na.rm=TRUE)
+  )
+
+print(ggplot(my_NN) +
+        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
+        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
+  ylab("NitrateNitrite") + theme(axis.text.x = element_text(angle = 90))
+
+
+#discharge
+my_dis <- sw_data %>%
+  group_by(siteID) %>%
+  summarise( 
+    n=n(),
+    mean=mean(totalDischarge, na.rm=TRUE),
+    sd=sd(totalDischarge, na.rm=TRUE)
+  )
+
+print(ggplot(my_dis) +
+        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
+        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
+  ylab("discharge") + theme(axis.text.x = element_text(angle = 90))
+
+
+
+#chla
+my_chla <- sw_data %>%
+  group_by(siteID) %>%
+  summarise( 
+    n=n(),
+    mean=mean(Tchla, na.rm=TRUE),
+    sd=sd(Tchla, na.rm=TRUE)
+  )
+
+print(ggplot(my_chla) +
+        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
+        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
+  ylab("chla") + theme(axis.text.x = element_text(angle = 90))
+
+
 #pH 
-my_pH <- grab_dat %>%
+my_pH <- sw_data %>%
   group_by(siteID) %>%
   summarise( 
     n=n(),
@@ -280,6 +402,10 @@ print(ggplot(my_diss_org_C) +
 ##  NOTE: function removes values, so enter term for locations you DON'T want
 wqvalues101<-wqvalues[(wqvalues$horizontalPosition=="101"),]
 wqvalues102<-wqvalues[(wqvalues$horizontalPosition=="102"),]
+
+#### Extracts datetime and converts datetime string to POSIXct ####
+wqvalues101$startDateTime<-as.POSIXct(wqvalues101$startDateTime,format="%Y-%m-%dT%H:%M:%OS")
+wqvalues102$startDateTime<-as.POSIXct(wqvalues102$startDateTime,format="%Y-%m-%dT%H:%M:%OS")
 
 ### Plots data ###
 plot(wqvalues101$startDateTime,wqvalues101$dissolvedOxygen,type="l",col="blue",main="ARIK DO",xlab="Date",ylab="DO (mg/L)")

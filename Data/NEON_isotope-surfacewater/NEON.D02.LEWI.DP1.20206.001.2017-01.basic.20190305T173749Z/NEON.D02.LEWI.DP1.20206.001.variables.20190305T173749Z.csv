@@ -1,0 +1,116 @@
+table,fieldName,description,dataType,units,downloadPkg
+asi_POMExternalLabDataPerSample,uid,"Unique ID within NEON database; an identifier for the record",string,NA,basic
+asi_POMExternalLabDataPerSample,domainID,"Unique identifier of the NEON domain",string,NA,basic
+asi_POMExternalLabDataPerSample,siteID,"NEON site code",string,NA,basic
+asi_POMExternalLabDataPerSample,namedLocation,"Name of the measurement location in the NEON database",string,NA,basic
+asi_POMExternalLabDataPerSample,collectDate,"Date of the collection event",dateTime,NA,basic
+asi_POMExternalLabDataPerSample,sampleID,"Identifier for sample",string,NA,basic
+asi_POMExternalLabDataPerSample,sampleCode,"Barcode of a sample",string,NA,basic
+asi_POMExternalLabDataPerSample,sampleCondition,"Condition of a sample",string,NA,basic
+asi_POMExternalLabDataPerSample,laboratoryName,"Name of the laboratory or facility that is processing the sample",string,NA,basic
+asi_POMExternalLabDataPerSample,analysisDate,"Date that the sample was analyzed",dateTime,NA,basic
+asi_POMExternalLabDataPerSample,analyzedBy,"Name of lab personnel analyzing sample",string,NA,basic
+asi_POMExternalLabDataPerSample,sampleType,"Type of sample",string,NA,basic
+asi_POMExternalLabDataPerSample,replicate,"Sample replicate",string,NA,basic
+asi_POMExternalLabDataPerSample,sampleVolumeFiltered,"Volume of water filtered onto the filter for external analysis",real,milliliter,basic
+asi_POMExternalLabDataPerSample,filterSize,"Filter diameter",real,millimeter,basic
+asi_POMExternalLabDataPerSample,percentFilterAnalyzed,"Fraction of the filter sampled (%)",real,percent,basic
+asi_POMExternalLabDataPerSample,analyte,"Analyte or parameter measured",string,NA,basic
+asi_POMExternalLabDataPerSample,analyteConcentration,"Concentration of analyte",real,NA,basic
+asi_POMExternalLabDataPerSample,plantAlgaeLabUnits,"Standard units of measure used by the plant and algae external laboratory",string,NA,basic
+asi_POMExternalLabDataPerSample,method,"Published method used for analysis",string,NA,basic
+asi_POMExternalLabDataPerSample,externalRemarks,"External lab notes; free text comments accompanying the record",string,NA,basic
+asi_POMExternalLabDataPerSample,externalLabDataQF,"Data quality flag for external lab data",string,NA,basic
+asi_externalLabH2OIsotopes,uid,"Unique ID within NEON database; an identifier for the record",string,NA,basic
+asi_externalLabH2OIsotopes,domainID,"Unique identifier of the NEON domain",string,NA,basic
+asi_externalLabH2OIsotopes,siteID,"NEON site code",string,NA,basic
+asi_externalLabH2OIsotopes,namedLocation,"Name of the measurement location in the NEON database",string,NA,basic
+asi_externalLabH2OIsotopes,collectDate,"Date of the collection event",dateTime,NA,basic
+asi_externalLabH2OIsotopes,analysisDate,"Date that the sample was analyzed",dateTime,NA,basic
+asi_externalLabH2OIsotopes,isotopeH2OSampleID,"Identifier of sample for 2H:1H and 18O:16O water stable isotope sample",string,NA,basic
+asi_externalLabH2OIsotopes,isotopeH2OSampleCode,"Barcode of the water stable isotope sample",string,NA,basic
+asi_externalLabH2OIsotopes,instrumentSN,"Serial number of instrument used to analyze sample",string,NA,basic
+asi_externalLabH2OIsotopes,d18OWater,"Measure of the ratio of stable isotopes 18O:16O in H2O, relative to the Vienna Standard Mean Ocean Water",real,permill,basic
+asi_externalLabH2OIsotopes,d2HWater,"Measure of the ratio of stable isotopes 2H:1H in H2O, relative to the Vienna Standard Mean Ocean Water",real,permill,basic
+asi_externalLabH2OIsotopes,d18OsdWater,"Standard deviation of d18O of replicate H2O samples",real,permill,basic
+asi_externalLabH2OIsotopes,d2HsdWater,"Standard deviation of d2H of replicate H2O samples",real,permill,basic
+asi_externalLabH2OIsotopes,isotopeH2OExternalLabQF,"Quality flag for samples with high standard deviation (del2Hsd >=0.75 or del18Osd>=0.2) of H2O isotope samples. High standard deviations are flagged with a 1, else flag set to 0",unsigned integer,NA,basic
+asi_externalLabH2OIsotopes,laboratoryName,"Name of the laboratory or facility that is processing the sample",string,NA,basic
+asi_externalLabH2OIsotopes,analyzedBy,"Name of lab personnel analyzing sample",string,NA,basic
+asi_externalLabH2OIsotopes,sampleCondition,"Condition of a sample",string,NA,basic
+asi_externalLabH2OIsotopes,externalRemarks,"External lab notes; free text comments accompanying the record",string,NA,basic
+asi_externalLabH2OIsotopes,externalLabDataQF,"Data quality flag for external lab data",string,NA,basic
+asi_fieldData,uid,"Unique ID within NEON database; an identifier for the record",string,NA,basic
+asi_fieldData,domainID,"Unique identifier of the NEON domain",string,NA,basic
+asi_fieldData,siteID,"NEON site code",string,NA,basic
+asi_fieldData,namedLocation,"Name of the measurement location in the NEON database",string,NA,basic
+asi_fieldData,collectDate,"Date of the collection event",dateTime,NA,basic
+asi_fieldData,parentSampleID,"Parent sampleID of sample being processed",string,NA,basic
+asi_fieldData,parentSampleCode,"Barcode of a parent sample",string,NA,basic
+asi_fieldData,isotopeH2OSampleCond,"Condition of a sample for 2H:1H and 18O:16O water stable isotope sample",string,NA,basic
+asi_fieldData,isotopeH2OSampleID,"Identifier of sample for 2H:1H and 18O:16O water stable isotope sample",string,NA,basic
+asi_fieldData,isotopeH2OSampleCode,"Barcode of the water stable isotope sample",string,NA,basic
+asi_fieldData,isotopePOMRep2SampleCond,"Condition of a sample for 13C:12C and 15N:14N particulate organic matter (POM) stable isotope sample for replicate 2",string,NA,basic
+asi_fieldData,isotopePOMRep2SampleID,"Identifier of sample for 13C:12C and 15N:14N particulate organic matter (POM) stable isotope sample for replicate 2",string,NA,basic
+asi_fieldData,isotopePOMRep2SampleCode,"Barcode of the particulate organic matter (POM) stable isotope sample, replicate 2",string,NA,basic
+asi_fieldData,isotopePOMSampleCond,"Condition of a sample for 13C:12C and 15N:14N particulate organic matter (POM) stable isotope sample",string,NA,basic
+asi_fieldData,isotopePOMSampleID,"Identifier of sample for 13C:12C and 15N:14N particulate organic matter (POM) stable isotope sample",string,NA,basic
+asi_fieldData,isotopePOMSampleCode,"Barcode of the particulate organic matter (POM) stable isotope sample",string,NA,basic
+asi_fieldData,processedDateFilters,"Date or date and time of processing event of filtered samples",dateTime,NA,basic
+asi_fieldData,processedDateH2OIsotopes,"Date or date and time of processing event of H2O isotope sample",dateTime,NA,basic
+asi_fieldData,sampleVolumeFilteredPOMRep1,"Volume of water filtered through the filter for particulate organic matter (POM) replicate 1 for isotope external analysis",real,milliliter,basic
+asi_fieldData,sampleVolumeFilteredPOMRep2,"Volume of water filtered through the filter for particulate organic matter (POM) replicate 2 for isotope external analysis",real,milliliter,basic
+asi_fieldData,fieldDataQF,"Data quality flag for field data",string,NA,basic
+asi_fieldSuperParent,uid,"Unique ID within NEON database; an identifier for the record",string,NA,basic
+asi_fieldSuperParent,domainID,"Unique identifier of the NEON domain",string,NA,basic
+asi_fieldSuperParent,siteID,"NEON site code",string,NA,basic
+asi_fieldSuperParent,namedLocation,"Name of the measurement location in the NEON database",string,NA,basic
+asi_fieldSuperParent,decimalLatitude,"The geographic latitude (in decimal degrees, WGS84) of the geographic center of the reference area",real,decimalDegree,basic
+asi_fieldSuperParent,decimalLongitude,"The geographic longitude (in decimal degrees, WGS84) of the geographic center of the reference area",real,decimalDegree,basic
+asi_fieldSuperParent,coordinateUncertainty,"The horizontal distance (in meters) from the given decimalLatitude and decimalLongitude describing the smallest circle containing the whole of the Location. Zero is not a valid value for this term",real,meter,basic
+asi_fieldSuperParent,additionalCoordUncertainty,"Additional uncertainty to be added to the coordinate uncertainty at all sites",real,meter,basic
+asi_fieldSuperParent,elevation,"Elevation (in meters) above sea level",real,meter,basic
+asi_fieldSuperParent,elevationUncertainty,"Uncertainty in elevation values (in meters)",real,meter,basic
+asi_fieldSuperParent,geodeticDatum,"Model used to measure horizontal position on the earth",string,NA,basic
+asi_fieldSuperParent,altLocation,"Alternate Sampling Location description",string,NA,basic
+asi_fieldSuperParent,altLatitude,"Alternate Sampling Location coordinate - latitude",real,decimalDegree,basic
+asi_fieldSuperParent,altLongitude,"Alternate Sampling Location coordinate - longitude",real,decimalDegree,basic
+asi_fieldSuperParent,altCoordinateUncertainty,"The horizontal distance (in meters) from the given altLatitude and altLongitude describing the smallest circle containing the whole of the Location. Zero is not a valid value for this term",real,meter,basic
+asi_fieldSuperParent,altGeodeticDatum,"Model used to measure horizontal position on the earth for alternate location coordinate",string,NA,basic
+asi_fieldSuperParent,collectDate,"Date of the collection event",dateTime,NA,basic
+asi_fieldSuperParent,aquaticSiteType,"Type of aquatic site, includes lake, river or stream",string,NA,basic
+asi_fieldSuperParent,samplingImpractical,"Samples and/or measurements were not collected due to the indicated circumstance",string,NA,basic
+asi_fieldSuperParent,parentSampleID,"Parent sampleID of sample being processed",string,NA,basic
+asi_fieldSuperParent,parentSampleCode,"Barcode of a parent sample",string,NA,basic
+asi_fieldSuperParent,eventID,"An identifier for the set of information associated with the event, which includes information about the place and time of the event",string,NA,basic
+asi_fieldSuperParent,samplerType,"Type of sampler used to collect the sample",string,NA,basic
+asi_fieldSuperParent,dissolvedOxygen,"Dissolved Oxygen Concentration",real,milligramsPerLiter,basic
+asi_fieldSuperParent,dissolvedOxygenSaturation,"Dissolved Oxygen Percent Saturation",real,percent,basic
+asi_fieldSuperParent,specificConductance,"Conductivity auto-corrected to 25 degrees C",real,microsiemensPerCentimeter,basic
+asi_fieldSuperParent,waterTemp,"Temperature of water (C)",real,celsius,basic
+asi_fieldSuperParent,asiSamplingProtocolVersion,"The NEON document number and version of the aquatic stable isotopes protocol where detailed information regarding the sampling method used is available; format NEON.DOC.######vX",string,NA,basic
+asi_fieldSuperParent,lowerSegmentDepth,"Depth at bottom of stratified lake segment",real,meter,basic
+asi_fieldSuperParent,upperSegmentDepth,"Depth at top of stratified lake segment",real,meter,basic
+asi_fieldSuperParent,maxDepth,"Maximum depth",real,meter,basic
+asi_fieldSuperParent,lakeSampleDepth1,"Sample depth of a single lake sample collected below the surface; the sample depth of the upper sample for a composite lake sample collected below the surface",real,meter,basic
+asi_fieldSuperParent,lakeSampleDepth2,"Sample depth of the lower sample for a composite lake sample collected below the surface",real,meter,basic
+asi_fieldSuperParent,aCollectedBy,"Primary NEON technician username who collected the data",string,NA,basic
+asi_fieldSuperParent,bCollectedBy,"Secondary NEON technician username who collected the data",string,NA,basic
+asi_fieldSuperParent,remarks,"Technician notes; free text comments accompanying the record",string,NA,basic
+asi_fieldSuperParent,fieldDataQF,"Data quality flag for field data",string,NA,basic
+asi_externalLabSummaryData,uid,"Unique ID within NEON database; an identifier for the record",string,NA,expanded
+asi_externalLabSummaryData,startDate,"The start date-time or interval during which an event occurred",dateTime,NA,expanded
+asi_externalLabSummaryData,endDate,"The end date-time or interval during which an event occurred",dateTime,NA,expanded
+asi_externalLabSummaryData,analyte,"Analyte or parameter measured",string,NA,expanded
+asi_externalLabSummaryData,sampleType,"Type of sample",string,NA,expanded
+asi_externalLabSummaryData,instrument,"Type of instrument used for the analysis",string,NA,expanded
+asi_externalLabSummaryData,testMethod,"Method used to conduct test",string,NA,expanded
+asi_externalLabSummaryData,method,"Published method used for analysis",string,NA,expanded
+asi_externalLabSummaryData,qaReferenceID,"Identifier for quality assurance reference material or standard",string,NA,expanded
+asi_externalLabSummaryData,standardReferenceKnownValue,"The known value for QA reference material, with units tied to the analyte",real,NA,expanded
+asi_externalLabSummaryData,standardReferenceMeasuredMean,"Long-term average of the measured value for QA reference material, with units tied to the analyte",real,NA,expanded
+asi_externalLabSummaryData,analyteAccuracy,"Long-term average accuracy, e.g. the absolute difference between observed and known values of the analyte, based on analysis of quality assurance reference materials or standards treated as unknowns",real,NA,expanded
+asi_externalLabSummaryData,analyteStandardDeviation,"Long-term average standard deviation values of the analyte, based on analysis of quality assurance reference materials or standards treated as unknowns",real,NA,expanded
+asi_externalLabSummaryData,laboratoryName,"Name of the laboratory or facility that is processing the sample",string,NA,expanded
+asi_externalLabSummaryData,labSpecificStartDate,"Date a specific analyte, instrument, and associated method detection limit combination started",dateTime,NA,expanded
+asi_externalLabSummaryData,labSpecificEndDate,"Date a specific analyte, instrument, and associated method detection limit combination ended",dateTime,NA,expanded

@@ -1,0 +1,3 @@
+uid,domainID,siteID,namedLocation,collectDate,analysisDate,isotopeH2OSampleID,isotopeH2OSampleCode,instrumentSN,d18OWater,d2HWater,d18OsdWater,d2HsdWater,isotopeH2OExternalLabQF,laboratoryName,analyzedBy,sampleCondition,externalRemarks,externalLabDataQF
+"4dd764a6-2d09-4dd4-843c-5b9ba914a840","D02","LEWI","LEWI.AOS.S2","2017-01-11","2017-02-24","LEWI.SS.20170111.H2O.1",,"HIDS2052",-7.92,-50.61,0.03,0.04,0,"SIRFER Lab at University of Utah","OlSmE6RRn5QQH8tvUHmK5i/poYiQr6sd","OK",,
+"30271bc3-6a6e-459e-9491-003bee1f3885","D02","LEWI","LEWI.AOS.S2","2017-01-25","2017-02-24","LEWI.SS.20170125.H2O.1",,"HIDS2052",-8.02,-50.78,0.04,0.17,0,"SIRFER Lab at University of Utah","OlSmE6RRn5QQH8tvUHmK5i/poYiQr6sd","OK",,

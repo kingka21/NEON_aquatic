@@ -1,0 +1,2 @@
+uid,domainID,siteID,namedLocation,collectDate,analysisDate,isotopeH2OSampleID,isotopeH2OSampleCode,instrumentSN,d18OWater,d2HWater,d18OsdWater,d2HsdWater,isotopeH2OExternalLabQF,laboratoryName,analyzedBy,sampleCondition,externalRemarks,externalLabDataQF
+"a3475032-67f4-4340-b80c-098e9ab91bae","D01","HOPB","HOPB.AOS.S2","2016-10-18","2016-11-17","HOPB.SS.20161018.H2O.1",,"HIDS2046",-7.92,-49.81,0.02,0.06,0,"SIRFER Lab at University of Utah","OlSmE6RRn5QQH8tvUHmK5i/poYiQr6sd","OK",,

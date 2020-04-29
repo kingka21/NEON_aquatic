@@ -5,10 +5,11 @@ library(factoextra) #load library to perform PCA
 #read in data 
 grab_dat<-read.csv('Data/surface_water_grab.csv', header = TRUE)
 
-variables<-grab_dat[,13:40] #select only columns with variables for PCA, this is columns 13 through 40
-variables$siteID<-paste(grab_dat$siteID) #add siteID column back to the table to be able to group later
-variables2<-na.omit(variables) # get rid of rows with NA
-all.pca<-prcomp(variables2[,-29], scale=TRUE) # perform PCA without the siteID which is column 29 
+variables<-sw_data[,6:48] #select only columns with variables for PCA, this is columns 13 through 40
+var2<-subset(variables, select = -c(DATE, decimalLatitude, decimalLongitude, totalDischarge))
+var2$siteID<-paste(sw_data$siteID) #add siteID column back to the table to be able to group later
+variables2<-na.omit(var2) # get rid of rows with NA
+all.pca<-prcomp(variables2[,-40]) # perform PCA without the siteID which is column 29 
 
 fviz_eig(all.pca)  ###Scree plot: how much does each axis explain the variation in the data
 eig.val<-get_eigenvalue(all.pca) ## table of the eigenvalues 
