@@ -7,8 +7,8 @@ nutrients_grab <- loadByProduct(dpID="DP1.20093.001",
                                   "MCDI", 'LEWI', "BLUE", "TECR", "REDB", "SYCA", 
                                   "MCRA", "OKSR", "ARIK", "GUIL", "CUPE", "TOMB", "BLWA"
                                 ),
-                                startdate="2019-01", 
-                                enddate="2019-09", 
+                                startdate="2017-01", 
+                                enddate="2019-12", 
                                 package="expanded", #basic will just give you concentrations, #expanded will give you flags 
                                 check.size = F)  ### check the size of the file before you download it 
 
@@ -21,7 +21,7 @@ chl_grab <- loadByProduct(dpID="DP1.20163.001",
                             "MCRA", "OKSR", "ARIK", "GUIL", "CUPE", "TOMB", "BLWA"
                           ),
                           startdate="2017-01", 
-                          enddate="2019-09", 
+                          enddate="2019-12", 
                           package="expanded", #basic will just give you concentrations, #expanded will give you flags 
                           check.size = F)  ### check the size of the file before you download it 
 
@@ -33,8 +33,8 @@ iso_grab <- loadByProduct(dpID="DP1.20206.001",
                             "MCDI", 'LEWI', "BLUE", "TECR", "REDB", "SYCA", 
                             "MCRA", "OKSR", "ARIK", "GUIL", "CUPE", "TOMB", "BLWA"
                           ),
-                          startdate="2012-01", 
-                          enddate="2019-09", 
+                          startdate="2017-01", 
+                          enddate="2019-12", 
                           package="expanded", #basic will just give you concentrations, #expanded will give you flags 
                           check.size = F)  ### check the size of the file before you download it 
 
@@ -126,7 +126,7 @@ plot(CARI$DATE, CARI$totalDischarge)
 #all sites 
 ggplot(data = sw_data, aes(x=DATE, y=totalDischarge)) + geom_point(aes(colour=siteID))
 
-#select out only 2016-current #seems to messy to actually use 
+#select out only 2016-current #seems too messy to actually use 
 sw_data$YEAR<-lubridate::year(sw_data$DATE)
 recent_years<-filter(sw_data, YEAR >= 2016)
 ggplot(data = recent_years, aes(x=DATE, y=totalDischarge)) + geom_point(aes(colour=siteID))
