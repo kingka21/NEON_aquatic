@@ -38,7 +38,7 @@ library(dplyr)
 ##      20276.001 = isotopes in groundwater
 ##      20048.001 = manual discharge measures (about 26/year/site)
 ##      20042.011 = PAR
-####Water quality SENSOR DATA ####
+## Water quality SENSOR DATA 
 #In situ sensor-based specific conductivity, concentration of chlorophyll a, dissolved oxygen content, fDOM concentration (fluorescent dissolved material), pH, and turbidity 
 #available as one-, five-, and thirty-minute averages in surface water 
 ## pull out just one of the sensors horizontal position
@@ -49,7 +49,7 @@ library(dplyr)
 #specificConductance, dissolvedOxygen, pH, chlorophyll, turbidity,fDOM, nitrate? water level? isotopes?  temp? 
 #10 sites: ARIK, COMO, KING, MAYF, TOMB, BLUE, CUPE, MART, HOPB, WALK
 #FDOM, chla, conductivity 
-####Chlorophyll a ####
+#### Chlorophyll a ####
 ##ARIK site 
 ARIK_sensor <- loadByProduct(dpID="DP1.20288.001", 
                            site=c("ARIK"),
@@ -574,16 +574,58 @@ fDOM_sensor<-select(fDOM_sensor_10sites, siteID, fDOM, startDateTime, DATE, YEAR
 
 write.csv(fDOM_sensor, 'Data/sw_fDOM_sensor.csv', row.names = FALSE)
 
-####daily averages of chlorophyll a ####
-sensor_chl <- sensor1 %>%
+####daily and weekly averages of chlorophyll a ####
+#read in large datasets from computer, too large to save on Git #### 
+chl_sensor<-read.csv("/Users/katelynking/Desktop/NEON project/sw_chl_sensor.csv", header=TRUE)
+
+# remove sensor data that has NA for the date 
+chl_no_NA<-chl_sensor[!with(chl_sensor,is.na(startDateTime)),]
+
+daily_chl <- chl_no_NA %>%
   group_by(siteID, DATE) %>%
   summarise( 
     n=n(),
-    mean=mean(chlorophyll, na.rm=TRUE)
+    chl_day_mean=mean(chlorophyll, na.rm=TRUE),
+    sd=sd(chlorophyll, na.rm=TRUE)
   )
 
-# sensor data that isn't NA
-nona<-sensor_chl[!with(sensor_chl,is.na(mean)),]
+# weekly average 
+# Load lubridate package
+library(package=lubridate)
+
+# Set Weeks number. Date already of class `Date`, new week starts on a Monday
+chl_no_NA$Week <- week(chl_no_NA$DATE)
+
+# Aggregate over week number and site
+weekly_mean<-aggregate(chlorophyll~Week+siteID, FUN=mean, data=chl_no_NA, na.rm=TRUE)
+
+#merge with daily data 
+daily_chl$Week <- week(daily_chl$DATE) #add week to the daily data for merge 
+chl_means<-left_join(daily_chl, weekly_mean, by=c('siteID', 'Week')) %>%
+              rename(chl_week_mean= chlorophyll) #rename column using new name = old name
+
+write.csv(chl_means, 'Data/sw_chl_sensor_means.csv', row.names = FALSE)
+
+#### graphing of individual site means and SDs ####
+#chla
+my_chla <- variables %>%
+  group_by(siteID) %>%
+  summarise( 
+    n=n(),
+    mean=mean(chlorophyll_mean, na.rm=TRUE),
+    sd=sd(chlorophyll_mean, na.rm=TRUE)
+  )
+
+my_chla$siteID <-ordered(my_chla$siteID, 
+                         levels=c("MAYF", "COMO", "MART", 
+                                  "HOPB", "TOMB", "WALK", "CUPE",
+                                  "ARIK", "KING", "BLUE"))
+
+print(ggplot(my_chla) +
+        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
+        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
+  ylab("chla") + theme(axis.text.x = element_text(angle = 90))
+
 
 #all sites 
 ggplot(data = nona, aes(x=monthYr, y=mean)) +
@@ -626,68 +668,5 @@ ggplot(data = GUIL, aes(x=monthYr, y=mean)) +
   geom_point(aes(colour=siteID)) 
 
 
-#### try to merge grab with sensor ####
-
-# having a full join by patient ID
-full_df <- full_join(df1, df2, by = "ID")
-
-# select obs within 5 days
-result <- full_df %>%
-  # including the day difference for your reference
-  mutate(Day.diff = abs(as.Date(Start.Date, "%m/%d/%Y") - as.Date(Lab.date, "%m/%d/%Y"))) %>%
-  # filtering the data frame to keep the difference within 5 days
-  filter(Day.diff <= 5)
-
-
-chl_sensor<-select(sites, siteID, DATE, MONTH, DAY, monthYr, chlorophyll)
-#daily averages 
-chl_avg <- chl_sensor %>%
-  group_by(siteID, monthYr ) %>%
-  summarise( 
-    n=n(),
-    mean=mean(chlorophyll, na.rm=TRUE)
-  )
-
-sw_data$YEAR<-format(sw_data$DATE,format="%Y")
-sw_data$MONTH<-format(sw_data$DATE,format="%m")
-sw_data$DAY<-format(sw_data$DATE,format="%d")
-surface_grab_2019<-filter(sw_data, YEAR == "2019")
-surface_grab_2019$monthYr = format(as.Date(surface_grab_2019$DATE), "%m.%d") 
-
-combined<-left_join(chl_avg, surface_grab_2019,  by = c('siteID', 'monthYr'))
-#write.csv(combined, 'Data/ten_sites.csv', row.names = FALSE)
-
-#select out 12 variables + chlorophyll ### removed Conductivity!! 
-variables<-select(combined, siteID, monthYr, mean,
-                  dissolvedOrganicCarbon, waterIron, 
-                  waterNitrateAndNitriteN, waterManganese, waterChlorine, 
-                  waterFluorine, waterPotassium, waterSodium, 
-                  waterCalcium, dissolvedInorganicCarbon, waterMagnesium)
-
-#change the name of "mean" to cholophyll 
-names(variables)[3]<-paste("chlorophyll_mean")
-
-#select only rows with all of the data points 
-nona<-variables[!with(variables,is.na(externalConductance)),]
-
-
-#chla
-my_chla <- variables %>%
-  group_by(siteID) %>%
-  summarise( 
-    n=n(),
-    mean=mean(chlorophyll_mean, na.rm=TRUE),
-    sd=sd(chlorophyll_mean, na.rm=TRUE)
-  )
-
-my_chla$siteID <-ordered(my_chla$siteID, 
-                         levels=c("MAYF", "COMO", "MART", 
-                                  "HOPB", "TOMB", "WALK", "CUPE",
-                                  "ARIK", "KING", "BLUE"))
-
-print(ggplot(my_chla) +
-        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
-        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
-  ylab("chla") + theme(axis.text.x = element_text(angle = 90))
 
 
