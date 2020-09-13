@@ -1,3 +1,4 @@
+
 #### Graphing 13 sites of interest for exploring variation across sites (spatial) #### 
 #graph bar plot with error bars 
 SWgrab_dat<-read.csv('Data/surface_water_grab_QAQC.csv', header = TRUE)
@@ -260,8 +261,4 @@ print(ggplot(my_Br) +
         geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
         geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
   ylab("Bromine") + theme(axis.text.x = element_text(angle = 90))
-
-
-
-
 

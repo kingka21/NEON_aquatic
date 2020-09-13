@@ -3,9 +3,17 @@ install.packages("factoextra") #install the package if you have not used it befo
 library(factoextra) #load library to perform PCA 
 library("devtools")
 library("factoextra")
+library("corrplot")
+library("ggpubr")
+library("scales")
+library("viridis")  
+library("ggsci")
+library("ggplot2")
+library("gridExtra")
+library("FactoMineR")
 
 #################read in data for file with 10 sites (+3 replacement) chosen, sites = 13 ###########################
-surface_grab_dat<-read.csv('Data/surface_water_grab_QAQC.csv', header = TRUE)
+surface_grab_dat<-read.csv('Data/surface_water_grab_QAQC_3gone.csv', header = TRUE) #Had to manually remove three sites because could not use grep function correctly when reran code
 
 variables<-surface_grab_dat[,4:34] #select only columns with variables for PCA, this is columns 3 through 34
 variables$siteID<-paste(surface_grab_dat$siteID) #add siteID column back to the table to be able to group later
@@ -29,18 +37,41 @@ fviz_pca_var(Thirteensites_allvariables.pca,
 
 #Reduced number of variables down to 12
 write.csv(variables2, 'Data/variable_list.csv', row.names = FALSE) #checking order of variables so as to determine which ones to keep in next step#
-variables_subset<-subset(variables2, select = -c(1,2,3,6,9,11,12,13,15,19,20,22,23,24,25,27,28,29,30,31)) #removing redundant variables#
+variables_subset<-subset(variables2, select = -c(1,3,4,5,7,12,11,14,15,16,17,19,20,21,22,23,24,25,28,31)) #removing redundant variables#
 write.csv(variables_subset, 'Data/variable_subset.csv', row.names = FALSE) #checking variables so as to determine you have the correct in next step#
 Thirteensites_subsetvar.pca<-prcomp(variables_subset[, -12], scale=TRUE) #perform PCA with reduced dataset (13 sites), without the siteID which is column 13 
 
+get_pca_var(Thirteensites_subsetvar.pca)
+
+corrplot(Thirteensites_subsetvar.pca$cos2", is.corr=FALSE)
+head(var$cos2, 4)
+fviz_cos2(Thirteensites_subsetvar.pca, choice = "var", axes = 1:2)
+
+set.seed(123)
+res.km <- kmeans(var$coord, centers = 3, nstart = 25)
+grp <- as.factor(res.km$cluster)
+# Color variables by groups
+fviz_pca_var(Thirteensites_subsetvar.pca, col.var = grp, 
+             palette = c("#0073C2FF", "#EFC000FF", "#868686FF"),
+             legend.title = "Cluster")
+
 fviz_eig(Thirteensites_subsetvar.pca)  ###Scree plot: how much does each axis explain the variation in the data
 eig.val<-get_eigenvalue(Thirteensites_subsetvar.pca) ## table of the eigenvalues 
+
+fviz_pca_ind(Thirteensites_subsetvar.pca, col.ind = "cos2", 
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = FALSE # Avoid text overlapping (slow if many points)
+)
 
 # graph results with 13 sites, grouping using reduced variable dataset
 PCA_reducedvariables<-(fviz_pca_ind(Thirteensites_subsetvar.pca, label="none", habillage=variables_subset$siteID,  # group by the site
              addEllipses=TRUE, ellipse.level=0.75))
 
-PCA_reducedvariables +ylim(-3,3.5)+xlim(-4.5, 3.5)
+PCA_reducedvariables +ylim(-3,4)+xlim(-3.5, 4.5)
+
+fviz_pca_var(Thirteensites_subsetvar.pca, alpha.var = "cos2")
+#counldn't make work-- head(var$contrib, 4)
+#couldn't make work-- corrplot(var$cos2, is.corr=FALSE)
 
 fviz_eig(Thirteensites_subsetvar.pca)  ###eigen values associated with each PC (how much does each explain the variation in the data)
 eig.val<-get_eigenvalue(Thirteensites_subsetvar.pca) ## table of the eigenvalues 
@@ -53,15 +84,57 @@ fviz_pca_var(Thirteensites_subsetvar.pca,
 )
 
 # graph results with the site grouping and have vectors displayed, 13 sites, reduced variable set
-Biplot_reducedvariables<-fviz_pca_biplot(Thirteensites_subsetvar.pca, label="var", col.var="black", habillage=variables_subset$siteID,  # group by the site
-             addEllipses=TRUE, ellipse.level=0.75)
+Biplot_reducedvariables<-fviz_pca_biplot(Thirteensites_subsetvar.pca, font.legend=c(12,"bold","black"), font.x=c(14,"plain", "black"), font.y=c(14,"plain", "black"), 
+             arrowsize = 0.5, labelsize = 5, label="var", col.var="black", axes.linetype = "solid", habillage=variables_subset$siteID,  # group by the site
+             addEllipses=TRUE, ellipse.level=0.75, font.main=24, subtitle = "Principal Component Analysis", caption = "Source: factoextra",
+             xlab = "PC1 (30.6%)", ylab = "PC2 (18.5%)", legend.title = "Sites", legend.position = "top", title = "NEON Surface Water Chemistry", repel=TRUE)
 
-Biplot_reducedvariables +ylim(-3.5,5)+xlim(-6.5, 3.0)
+Biplot_reducedvariables +ylim(-3,5.5)+xlim(-3, 6.5) +scale_color_ucscgb() +scale_fill_ucscgb() +border(color = "black", size = 0.8, linetype = NULL) + theme(
+  # Hide panel borders and remove grid lines
+  panel.border = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  axis.ticks = element_blank(),
+  axis.text.x = element_blank(),
+  axis.text.y = element_blank(),
+  # Change axis line
+  axis.line = element_line(colour = "black"),
+  
+)
+
+print(variables_subset)
+eig.val <- get_eigenvalue(Thirteensites_subsetvar.pca)
+eig.val
+var <- get_pca_var(Thirteensites_subsetvar.pca)
+var
+corrplot(var$contrib, is.corr=FALSE) 
+fviz_contrib(Thirteensites_subsetvar.pca, choice = "var", axes = 1, top = 10)
+#The red dashed line on the graph above indicates the expected average contribution. 
+#If the contribution of the variables were uniform, the expected value would be 1/length(variables) = 1/10 = 10%. 
+#For a given component, a variable with a contribution larger than this cutoff could be 
+#considered as important in contributing to the component.
+fviz_contrib(Thirteensites_subsetvar.pca, choice = "var", axes = 2, top = 10)
+fviz_contrib(Thirteensites_subsetvar.pca, choice = "var", axes = 1:2, top = 10)
+
+Thirteensites_subsetvar.pca$quanti.sup
+
+var_coord_func <- function(loadings, comp.sdev){
+  loadings*comp.sdev
+}
+# Compute Coordinates
+#::::::::::::::::::::::::::::::::::::::::
+loadings <- Thirteensites_subsetvar.pca$rotation
+sdev <- Thirteensites_subsetvar.pca$sdev
+var.coord <- t(apply(loadings, 1, var_coord_func, sdev)) 
+print(var.coord[, 1:2])
+
+
+
 
 #Created data.frame reduced to 10 sites, using replacement sites (POSE for WALK; BLWA for TOMB; GUIL for CUPE)
-variables_replacement<- filter(variables_subset, !grepl("CUPE", variables_subset$siteID) & 
-                                !grepl("WALK", variables_subset$siteID) & 
-                                !grepl("TOMB", variables_subset$siteID))
+variables_replacement<- filter(variables_subset, !grepl("CUPE", siteID) & !grepl("WALK", siteID) & 
+  !grepl("TOMB", siteID))
+
 write.csv(variables_replacement, 'Data/variable_list_replacement.csv', row.names = FALSE) #checking order of variables and 574 observations#
 
 Tensites_replacement.pca<-prcomp(variables_replacement[, -12], scale=TRUE) #perform PCA with reduced dataset (10 sites), without the siteID which is column 13 
@@ -78,7 +151,8 @@ Biplot_replacement +ylim(-3.0,5)+xlim(-5.6, 3.0)
 
 
 ###################read in surface water data for file with all sites #########################
-SWgrab_allsites_dat<-read.csv('Data/surface_water_grab_allsites_PIVOT.csv', header = TRUE)
+
+SWgrab_allsites_dat<-(SWgrab_chem_dat_allsites_PIVOT, header = TRUE)
 
 variables_allsites<-SWgrab_allsites_dat[,4:34] #select only columns with variables for PCA, this is columns 11 through 39
 variables_allsites$siteID<-paste(SWgrab_allsites_dat$siteID) #add siteID column back to the table to be able to group later
@@ -135,7 +209,7 @@ fviz_pca_biplot(allsites_subsetvar.pca, label="var", col.var="black", habillage=
 
 ###################read in Groundwater data for file with 13 sites selected (10 + 3 replacement)#########################
 
-groundwater_grab_dat<-read.csv('Data/groundwater_grab_QAQC.csv', header = TRUE)
+groundwater_grab_dat<-read.csv('Data/groundwater_grab_QAQC_3gone.csv', header = TRUE)
 
 variables_GW<-groundwater_grab_dat[,4:37] #select only columns with variables for PCA, this is columns 11 through 39
 write.csv(variables_GW, 'Data/variable_GW.csv', row.names = FALSE) #checking variables so as to determine you have the correct in next step#
@@ -172,12 +246,52 @@ fviz_pca_var(subsetFINAL_subsetvar_GW.pca,
 )
 
 # graph groundwater results with the site grouping and have vectors displayed, final 10 sites, reduced variable set
-PCA_biplot_GW_reducedvar<-fviz_pca_biplot(subsetFINAL_subsetvar_GW.pca, label="var", col.var="black", habillage=variables_subsetFINAL_GW$siteID,  # group by the site
-                addEllipses=TRUE, ellipse.level=0.75)
+PCA_biplot_GW_reducedvar<-fviz_pca_biplot(subsetFINAL_subsetvar_GW.pca, font.legend=c(12,"bold","black"), font.x=c(14,"plain", "black"), font.y=c(14,"plain", "black"), 
+                                          arrowsize = 0.5, labelsize = 5, label="var", col.var="black", axes.linetype = "solid", habillage=variables_subsetFINAL_GW$siteID,  # group by the site
+                                          addEllipses=TRUE, ellipse.level=0.75, font.main=24, subtitle = "Principal Component Analysis", caption = "Source: factoextra",
+                                          xlab = "PC1 (29%)", ylab = "PC2 (19.8%)", legend.title = "Sites", legend.position = "top", title = "NEON Groundwater Chemistry", repel=TRUE)
 
-PCA_biplot_GW_reducedvar +ylim(-3,2)+xlim(-3,3.8)
 
-#Created data.frame reduced to 10 sites, using replacement sites (POSE for WALK; BLWA for TOMB; GUIL for CUPE)
+PCA_biplot_GW_reducedvar +xlim(-3, 4.5) +scale_y_reverse(limits=c(1.5,-4)) +scale_color_ucscgb() +scale_fill_ucscgb() +border(color = "black", size = 0.8, linetype = NULL) + theme(
+  # Hide panel borders and remove grid lines
+  panel.border = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  axis.ticks = element_blank(),
+  axis.text.x = element_blank(),
+  axis.text.y = element_blank(),
+  # Change axis line
+  axis.line = element_line(colour = "black"),
+  
+)
+
+print(variables_subsetFINAL_GW)
+eig.val <- get_eigenvalue(subsetFINAL_subsetvar_GW.pca)
+eig.val
+var <- get_pca_var(subsetFINAL_subsetvar_GW.pca)
+var
+corrplot(var$contrib, is.corr=FALSE) 
+fviz_contrib(subsetFINAL_subsetvar_GW.pca, choice = "var", axes = 1, top = 10)
+#The red dashed line on the graph above indicates the expected average contribution. 
+#If the contribution of the variables were uniform, the expected value would be 1/length(variables) = 1/10 = 10%. 
+#For a given component, a variable with a contribution larger than this cutoff could be 
+#considered as important in contributing to the component.
+fviz_contrib(subsetFINAL_subsetvar_GW.pca, choice = "var", axes = 2, top = 10)
+fviz_contrib(subsetFINAL_subsetvar_GW.pca, choice = "var", axes = 1:2, top = 10)
+
+subsetFINAL_subsetvar_GW.pca$quanti.sup
+
+var_coord_func <- function(loadings, comp.sdev){
+  loadings*comp.sdev
+}
+# Compute Coordinates
+#::::::::::::::::::::::::::::::::::::::::
+loadings <- subsetFINAL_subsetvar_GW.pca$rotation
+sdev <- subsetFINAL_subsetvar_GW.pca$sdev
+var.coord <- t(apply(loadings, 1, var_coord_func, sdev)) 
+print(var.coord[, 1:4])
+
+#Was not working for me to remove this way on 6 July 2020 #Created data.frame reduced to 10 sites, using replacement sites (POSE for WALK; BLWA for TOMB; GUIL for CUPE)
 GWvariables_replacement<- filter(variables_subsetFINAL_GW, !grepl("CUPE", variables_subsetFINAL_GW$siteID) & 
                                  !grepl("WALK", variables_subsetFINAL_GW$siteID) & 
                                  !grepl("TOMB", variables_subsetFINAL_GW$siteID))

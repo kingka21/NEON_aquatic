@@ -111,7 +111,7 @@ SWgrab_info_dat_subsetFINAL<-as.data.frame(swc_fieldSuperParent) #table that has
 write.csv(SWgrab_chem_dat_subsetFINAL, 'Data/surface_water_grab_subsetFINAL_NoModification.csv', row.names = FALSE)
 
 #32,521 observations (13 sites) in initial download of surface water chemistry, grab samples
-#first step is to remove lines where sampleID ends with .2 or .3, remaining observations=18,693#
+#first step is to remove lines where sampleID ends with .2 or .3
 SWgrab_chem_dat_subsetFINAL_REMOVE<-filter(SWgrab_chem_dat_subsetFINAL, !grepl("FIL.3$", sampleID))
 SWgrab_chem_dat_subsetFINAL_REMOVE<-filter(SWgrab_chem_dat_subsetFINAL_REMOVE, !grepl("FIL.2$", sampleID))
 SWgrab_chem_dat_subsetFINAL_REMOVE<-filter(SWgrab_chem_dat_subsetFINAL_REMOVE, !grepl("RAW.3$", sampleID))
@@ -134,7 +134,7 @@ SWgrab_chem_dat_subsetFINAL_QF <-filter(SWgrab_chem_dat_subsetFINAL_REMOVE, ship
 #Setting negative values for nutrients to 0#
 SWgrab_chem_dat_subsetFINAL_QF[SWgrab_chem_dat_subsetFINAL_QF <0] <- 0 #change negative values to 0 
 
-#25,336 observations, check file to make sure removal of flagged data and zeros was completed#
+#24,212 observations, check file to make sure removal of flagged data and zeros was completed#
 write.csv(SWgrab_chem_dat_subsetFINAL_QF, 'Data/surface_water_grab_subsetFINAL_QF.csv', row.names = FALSE)
 
 #generate new table using pivot data for water chemistry parameters#
