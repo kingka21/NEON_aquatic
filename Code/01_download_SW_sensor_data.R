@@ -48,8 +48,9 @@ library(dplyr)
     ##  NOTE: SUNA and fDOM only at downstream stream station or lake/river buoy
 #specificConductance, dissolvedOxygen, pH, chlorophyll, turbidity,fDOM, nitrate? water level? isotopes?  temp? 
 #10 sites: ARIK, COMO, KING, MAYF, TOMB, BLUE, CUPE, MART, HOPB, WALK
+# add 3 sites POSE, BLWA, GUIL
 #FDOM, chla, conductivity 
-#### Chlorophyll a ####
+#### Chlorophyll a data download ####
 ##ARIK site 
 ARIK_sensor <- loadByProduct(dpID="DP1.20288.001", 
                            site=c("ARIK"),
@@ -281,7 +282,143 @@ chl_sensor<-select(chl_sensor_10sites, siteID, chlorophyll, startDateTime, DATE,
 
 write.csv(chl_sensor, 'Data/sw_chl_sensor.csv', row.names = FALSE)
 
-#read in data 
+# adding 3 sites POSE, BLWA, GUIL
+pose_sensor <- loadByProduct(dpID="DP1.20288.001", 
+                             site=c( "POSE"),
+                             startdate="2017-01",  #year and month
+                             enddate="2019-12" ,
+                             package="expanded",
+                             check.size = T , 
+                             avg= 'all') # 'all', or the averaging interval to download, in minutes. Only applicable to sensor data.
+
+for(i in 1:length(pose_sensor)) {assign(names(pose_sensor)[i], pose_sensor[[i]])}   #calls the table 
+#table with data is waq_instantaneous
+POSE<-waq_instantaneous
+POSE_QA<-select(POSE, siteID, horizontalPosition, startDateTime, chlorophyll, chlorophyllRangeQF, chlorophyllStepQF,
+                chlorophyllNullQF, chlorophyllGapQF,
+                chlorophyllSpikeQF, chlorophyllValidCalQF,
+                chlorophyllSuspectCalQF, chlorophyllPersistenceQF,
+                chlorophyllAlphaQF, chlorophyllBetaQF,
+                chlorophyllFinalQF, chlorophyllFinalQFSciRvw) 
+POSE_QA[is.na(POSE_QA)] <- 0 #change NAs to 0 
+POSE_QA <-filter(POSE_QA, chlorophyllRangeQF == 0 & chlorophyllStepQF == 0 &
+                   chlorophyllNullQF == 0 & chlorophyllGapQF == 0 & chlorophyllSpikeQF == 0 &
+                   chlorophyllValidCalQF == 0 & chlorophyllSuspectCalQF == 0 & chlorophyllPersistenceQF == 0 & chlorophyllAlphaQF == 0 &
+                   chlorophyllBetaQF == 0 & chlorophyllFinalQF == 0 & chlorophyllFinalQFSciRvw == 0) 
+# 1969936 obs to 1347096 after flags removed 
+POSE_QA<-filter(POSE_QA, horizontalPosition == "102" ) #102= downstream sensor 
+
+#BLWA
+blwa_sensor <- loadByProduct(dpID="DP1.20288.001", 
+                             site=c( "BLWA"),
+                             startdate="2017-01",  #year and month
+                             enddate="2019-12" ,
+                             package="expanded",
+                             check.size = T , 
+                             avg= 'all') # 'all', or the averaging interval to download, in minutes. Only applicable to sensor data.
+
+for(i in 1:length(blwa_sensor)) {assign(names(blwa_sensor)[i], blwa_sensor[[i]])}   #calls the table 
+#table with data is waq_instantaneous
+BLWA<-waq_instantaneous
+BLWA_QA<-select(BLWA, siteID, horizontalPosition, startDateTime, chlorophyll, chlorophyllRangeQF, chlorophyllStepQF,
+                chlorophyllNullQF, chlorophyllGapQF,
+                chlorophyllSpikeQF, chlorophyllValidCalQF,
+                chlorophyllSuspectCalQF, chlorophyllPersistenceQF,
+                chlorophyllAlphaQF, chlorophyllBetaQF,
+                chlorophyllFinalQF, chlorophyllFinalQFSciRvw) 
+BLWA_QA[is.na(BLWA_QA)] <- 0 #change NAs to 0 
+BLWA_QA <-filter(BLWA_QA, chlorophyllRangeQF == 0 & chlorophyllStepQF == 0 &
+                   chlorophyllNullQF == 0 & chlorophyllGapQF == 0 & chlorophyllSpikeQF == 0 &
+                   chlorophyllValidCalQF == 0 & chlorophyllSuspectCalQF == 0 & chlorophyllPersistenceQF == 0 & chlorophyllAlphaQF == 0 &
+                   chlorophyllBetaQF == 0 & chlorophyllFinalQF == 0 & chlorophyllFinalQFSciRvw == 0) 
+# 148451 obs to 31172 after flags removed 
+BLWA_QA<-filter(BLWA_QA, horizontalPosition == "103" ) #103 was only position available 
+
+#GUIL
+guil_sensor <- loadByProduct(dpID="DP1.20288.001", 
+                             site=c( "GUIL"),
+                             startdate="2017-01",  #year and month
+                             enddate="2019-12" ,
+                             package="expanded",
+                             check.size = T , 
+                             avg= 'all') # 'all', or the averaging interval to download, in minutes. Only applicable to sensor data.
+
+for(i in 1:length(guil_sensor)) {assign(names(guil_sensor)[i], guil_sensor[[i]])}   #calls the table 
+#table with data is waq_instantaneous
+GUIL<-waq_instantaneous
+GUIL_QA<-select(GUIL, siteID, horizontalPosition, startDateTime, chlorophyll, chlorophyllRangeQF, chlorophyllStepQF,
+                chlorophyllNullQF, chlorophyllGapQF,
+                chlorophyllSpikeQF, chlorophyllValidCalQF,
+                chlorophyllSuspectCalQF, chlorophyllPersistenceQF,
+                chlorophyllAlphaQF, chlorophyllBetaQF,
+                chlorophyllFinalQF, chlorophyllFinalQFSciRvw) 
+GUIL_QA[is.na(GUIL_QA)] <- 0 #change NAs to 0 
+GUIL_QA <-filter(GUIL_QA, chlorophyllRangeQF == 0 & chlorophyllStepQF == 0 &
+                   chlorophyllNullQF == 0 & chlorophyllGapQF == 0 & chlorophyllSpikeQF == 0 &
+                   chlorophyllValidCalQF == 0 & chlorophyllSuspectCalQF == 0 & chlorophyllPersistenceQF == 0 & chlorophyllAlphaQF == 0 &
+                   chlorophyllBetaQF == 0 & chlorophyllFinalQF == 0 & chlorophyllFinalQFSciRvw == 0) 
+# 1669431 obs to 1371169 after flags removed 
+GUIL_QA<-filter(GUIL_QA, horizontalPosition == "102" ) #102 downstream position  
+
+chl_sensor_3sites<- gtools::smartbind(BLWA_QA, POSE_QA, 
+                                       GUIL_QA)
+
+
+#put year, day, month and time in a different column?! 
+chl_sensor_3sites$startDateTime<-as.POSIXct(chl_sensor_3sites$startDateTime,format="%Y-%m-%dT%H:%M:%OS") #extract date and time to a different format 
+chl_sensor_3sites$DATE<-as.Date(chl_sensor_3sites$startDateTime,format="%Y-%m-%d")
+chl_sensor_3sites$YEAR<-format(chl_sensor_3sites$DATE,format="%Y")
+chl_sensor_3sites$MONTH<-format(chl_sensor_3sites$DATE,format="%m")
+chl_sensor_3sites$DAY<-format(chl_sensor_3sites$DATE,format="%d")
+
+chl_sensor<-select(chl_sensor_3sites, siteID, chlorophyll, startDateTime, DATE, YEAR, MONTH, DAY)
+
+write.csv(chl_sensor, "/Users/katelynking/Desktop/NEON project/sw_chl_sensor_3sites.csv", row.names = FALSE)
+
+####daily and weekly averages of chlorophyll a ####
+#read in large datasets from computer, too large to save on Git # 
+chl_sensor<-read.csv("/Users/katelynking/Desktop/NEON project/sw_chl_sensor.csv", header=TRUE)
+chl_sensor_3sites<-read.csv("/Users/katelynking/Desktop/NEON project/sw_chl_sensor_3sites.csv", header=TRUE)
+
+#remove CUPE and WALK, TOMB didnt have data, (add POSE, BLWA, GUIL)
+chl_sensor_sub<- filter(chl_sensor, 
+                  !grepl("CUPE", siteID) & 
+                    !grepl("WALK", siteID) )
+
+chl_sensor_10sites<- gtools::smartbind(chl_sensor_sub, chl_sensor_3sites )
+summary(chl_sensor_10sites$siteID) 
+
+# remove sensor data that has NA for the date 
+chl_no_NA<-chl_sensor_10sites[!with(chl_sensor_10sites,is.na(startDateTime)),]
+
+daily_chl <- chl_no_NA %>%
+  group_by(siteID, DATE) %>%
+  summarise( 
+    n=n(),
+    chl_day_mean=mean(chlorophyll, na.rm=TRUE),
+    sd=sd(chlorophyll, na.rm=TRUE)
+  )
+
+#weekly average #
+# Load lubridate package
+library(package=lubridate)
+
+# Set Weeks number. Date needs to be of class `Date`, new week starts on a Monday
+chl_no_NA$DATE<-as.Date(chl_no_NA$DATE)
+chl_no_NA$Week <- week(chl_no_NA$DATE)
+
+# Aggregate over week number and site
+weekly_mean<-aggregate(chlorophyll~Week+siteID, FUN=mean, data=chl_no_NA, na.rm=TRUE)
+
+#merge with daily data 
+daily_chl$DATE<-as.Date(daily_chl$DATE) #change date to date format
+daily_chl$Week <- week(daily_chl$DATE) #add week to the daily data for merge 
+chl_means<-left_join(daily_chl, weekly_mean, by=c('siteID', 'Week')) %>%
+  rename(chl_week_mean= chlorophyll) #rename column using new name = old name
+
+write.csv(chl_means, 'Data/sw_chl_sensor_means.csv', row.names = FALSE)
+
+#*investigate diernal patterns ####
 #sensor1<-read.csv('Data/surface_water_sensor.csv')
 #waq_instantaneous$monthYr = format(as.Date(waq_instantaneous$DATE), "%m.%d")
 
@@ -308,6 +445,66 @@ ggplot(data = summer, aes(x=startDateTime, y=chlorophyll))  +
   geom_point(aes(colour=siteID)) + 
   theme(legend.position = "none")
 
+#### graphing of individual site CHLA means and SDs ####
+#chla
+my_chla <- variables %>%
+  group_by(siteID) %>%
+  summarise( 
+    n=n(),
+    mean=mean(chlorophyll_mean, na.rm=TRUE),
+    sd=sd(chlorophyll_mean, na.rm=TRUE)
+  )
+
+my_chla$siteID <-ordered(my_chla$siteID, 
+                         levels=c("MAYF", "COMO", "MART", 
+                                  "HOPB", "TOMB", "WALK", "CUPE",
+                                  "ARIK", "KING", "BLUE"))
+
+print(ggplot(my_chla) +
+        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
+        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
+  ylab("chla") + theme(axis.text.x = element_text(angle = 90))
+
+
+#all sites 
+ggplot(data = nona, aes(x=monthYr, y=mean)) +
+  geom_point(aes(colour=siteID)) 
+
+BLUE<-filter(nona, siteID == "BLUE" )
+ggplot(data = BLUE, aes(x=DATE, y=mean)) +
+  geom_point(aes(colour=siteID)) 
+
+ARIK<-filter(nona, siteID == "ARIK" )
+ggplot(data = ARIK, aes(x=monthYr, y=mean)) +
+  geom_point(aes(colour=siteID)) 
+
+COMO<-filter(nona, siteID == "COMO" )
+ggplot(data = COMO, aes(x=monthYr, y=mean)) +
+  geom_point(aes(colour=siteID)) 
+
+KING<-filter(nona, siteID == "KING" )
+ggplot(data = KING, aes(x=monthYr, y=mean)) +
+  geom_point(aes(colour=siteID)) 
+
+MAYF<-filter(nona, siteID == "MAYF" )
+ggplot(data = MAYF, aes(x=monthYr, y=mean)) +
+  geom_point(aes(colour=siteID)) 
+
+TOMB<-filter(nona, siteID == "TOMB" )
+ggplot(data = TOMB, aes(x=monthYr, y=mean)) +
+  geom_point(aes(colour=siteID)) 
+
+FLNT<-filter(nona, siteID == "FLNT" )
+ggplot(data = FLNT, aes(x=monthYr, y=mean)) +
+  geom_point(aes(colour=siteID)) 
+
+CUPE<-filter(nona, siteID == "CUPE" )
+ggplot(data = CUPE, aes(x=monthYr, y=mean)) +
+  geom_point(aes(colour=siteID)) 
+
+GUIL<-filter(nona, siteID == "GUIL" )
+ggplot(data = GUIL, aes(x=monthYr, y=mean)) +
+  geom_point(aes(colour=siteID)) 
 
 ####Conductivity ####
 ARIK_QA<-select(ARIK, siteID, horizontalPosition, startDateTime, specificConductance, specificConductanceRangeQF, specificConductanceStepQF,
@@ -574,98 +771,9 @@ fDOM_sensor<-select(fDOM_sensor_10sites, siteID, fDOM, startDateTime, DATE, YEAR
 
 write.csv(fDOM_sensor, 'Data/sw_fDOM_sensor.csv', row.names = FALSE)
 
-####daily and weekly averages of chlorophyll a ####
-#read in large datasets from computer, too large to save on Git #### 
-chl_sensor<-read.csv("/Users/katelynking/Desktop/NEON project/sw_chl_sensor.csv", header=TRUE)
-
-# remove sensor data that has NA for the date 
-chl_no_NA<-chl_sensor[!with(chl_sensor,is.na(startDateTime)),]
-
-daily_chl <- chl_no_NA %>%
-  group_by(siteID, DATE) %>%
-  summarise( 
-    n=n(),
-    chl_day_mean=mean(chlorophyll, na.rm=TRUE),
-    sd=sd(chlorophyll, na.rm=TRUE)
-  )
-
-# weekly average 
-# Load lubridate package
-library(package=lubridate)
-
-# Set Weeks number. Date already of class `Date`, new week starts on a Monday
-chl_no_NA$Week <- week(chl_no_NA$DATE)
-
-# Aggregate over week number and site
-weekly_mean<-aggregate(chlorophyll~Week+siteID, FUN=mean, data=chl_no_NA, na.rm=TRUE)
-
-#merge with daily data 
-daily_chl$Week <- week(daily_chl$DATE) #add week to the daily data for merge 
-chl_means<-left_join(daily_chl, weekly_mean, by=c('siteID', 'Week')) %>%
-              rename(chl_week_mean= chlorophyll) #rename column using new name = old name
-
-write.csv(chl_means, 'Data/sw_chl_sensor_means.csv', row.names = FALSE)
-
-#### graphing of individual site means and SDs ####
-#chla
-my_chla <- variables %>%
-  group_by(siteID) %>%
-  summarise( 
-    n=n(),
-    mean=mean(chlorophyll_mean, na.rm=TRUE),
-    sd=sd(chlorophyll_mean, na.rm=TRUE)
-  )
-
-my_chla$siteID <-ordered(my_chla$siteID, 
-                         levels=c("MAYF", "COMO", "MART", 
-                                  "HOPB", "TOMB", "WALK", "CUPE",
-                                  "ARIK", "KING", "BLUE"))
-
-print(ggplot(my_chla) +
-        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
-        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
-  ylab("chla") + theme(axis.text.x = element_text(angle = 90))
 
 
-#all sites 
-ggplot(data = nona, aes(x=monthYr, y=mean)) +
-                 geom_point(aes(colour=siteID)) 
 
-BLUE<-filter(nona, siteID == "BLUE" )
-ggplot(data = BLUE, aes(x=DATE, y=mean)) +
-        geom_point(aes(colour=siteID)) 
-
-ARIK<-filter(nona, siteID == "ARIK" )
-ggplot(data = ARIK, aes(x=monthYr, y=mean)) +
-  geom_point(aes(colour=siteID)) 
-
-COMO<-filter(nona, siteID == "COMO" )
-ggplot(data = COMO, aes(x=monthYr, y=mean)) +
-  geom_point(aes(colour=siteID)) 
-
-KING<-filter(nona, siteID == "KING" )
-ggplot(data = KING, aes(x=monthYr, y=mean)) +
-  geom_point(aes(colour=siteID)) 
-
-MAYF<-filter(nona, siteID == "MAYF" )
-ggplot(data = MAYF, aes(x=monthYr, y=mean)) +
-  geom_point(aes(colour=siteID)) 
-
-TOMB<-filter(nona, siteID == "TOMB" )
-ggplot(data = TOMB, aes(x=monthYr, y=mean)) +
-  geom_point(aes(colour=siteID)) 
-
-FLNT<-filter(nona, siteID == "FLNT" )
-ggplot(data = FLNT, aes(x=monthYr, y=mean)) +
-  geom_point(aes(colour=siteID)) 
-
-CUPE<-filter(nona, siteID == "CUPE" )
-ggplot(data = CUPE, aes(x=monthYr, y=mean)) +
-  geom_point(aes(colour=siteID)) 
-
-GUIL<-filter(nona, siteID == "GUIL" )
-ggplot(data = GUIL, aes(x=monthYr, y=mean)) +
-  geom_point(aes(colour=siteID)) 
 
 
 
