@@ -201,7 +201,7 @@ tensites.hc$desc.ind$para
 
 ###################read in surface water data for file with all sites #########################
 
-SWgrab_allsites_dat<-(SWgrab_chem_dat_allsites_PIVOT, header = TRUE)
+SWgrab_allsites_dat<-(SWgrab_chem_dat_allsites_PIVOT , header = TRUE)
 
 variables_allsites<-SWgrab_allsites_dat[,4:34] #select only columns with variables for PCA, this is columns 11 through 39
 variables_allsites$siteID<-paste(SWgrab_allsites_dat$siteID) #add siteID column back to the table to be able to group later
