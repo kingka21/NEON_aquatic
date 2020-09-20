@@ -1,5 +1,6 @@
 # PCA analysis, Modified 6Aug2020 by JWEdmonds ## 
 #modified by KK on 13Sep2020
+#modified again by JWE on 20Sep20 when discovered that water chemistry parameters not in same order
 install.packages("factoextra") #install the package if you have not used it before
 library(factoextra) #load library to perform PCA 
 library(devtools)
@@ -201,23 +202,24 @@ tensites.hc$desc.ind$para
 
 ###################read in surface water data for file with all sites #########################
 
-SWgrab_allsites_dat<-(SWgrab_chem_dat_allsites_PIVOT , header = TRUE)
+SWgrab_allsites_dat<-read.csv('Data/surface_water_grab_allsites_PIVOT.csv', header = TRUE)
 
-variables_allsites<-SWgrab_allsites_dat[,4:34] #select only columns with variables for PCA, this is columns 11 through 39
+
+variables_allsites<-SWgrab_allsites_dat[,4:37] #select only columns with variables for PCA, this is columns 11 through 37 (row 38 has all NA so cancels out all rows if included)
 variables_allsites$siteID<-paste(SWgrab_allsites_dat$siteID) #add siteID column back to the table to be able to group later
 variables2_allsites<-na.omit(variables_allsites) # get rid of rows with NA
 write.csv(variables2_allsites, 'Data/variable_allsites_SW.csv', row.names = FALSE) #checking variables so as to determine you have the correct in next step#
 
-allsites_allvariables.pca<-prcomp(variables2_allsites[, -32], scale=TRUE) #perform PCA without the siteID which is column 30
+allsites_allvariables.pca<-prcomp(variables2_allsites[, -36], scale=TRUE) #perform PCA without the siteID which is column 36
 # graph results with the site grouping, all variables 
 PCAallsites_allvar<-fviz_pca_ind(allsites_allvariables.pca, label="none", habillage=variables2_allsites$siteID,  # group by the site
              addEllipses=TRUE, ellipse.level=0.75)
 PCAallsites_allvar +ylim(-4,5)+xlim(-7.5, 4.0)
 
-variables3_allsites<-subset(variables2_allsites, select = -c(1,2,4,5,6,7,10,13,14,15,16,17,19,20,21,22,23,26,29,31)) #removing redundant variables#
-allsites_subsetvar.pca<-prcomp(variables3_allsites[, -12],  scale. = T) #perform PCA with reduced number of variables, without the siteID which is column 12 
-write.csv(variables3_allsites, 'Data/variables_allsites.csv', row.names = FALSE) #checking variables so as to determine you have the correct in next step#
-
+variables3_allsites<-subset(variables2_allsites, select = -c(2,3,4,5,6,8,9,10,11,15,16,19,20,21,22,23,25,27,28,29,30,31,34)) #removing redundant variables#
+allsites_subsetvar.pca<-prcomp(variables3_allsites[, -12],  scale=TRUE) #perform PCA with reduced number of variables, without the siteID which is column 12 
+write.csv(variables3_allsites, 'Data/variables_subset_allsites.csv', row.names = FALSE) #checking variables so as to determine you have the correct in next step#
+#End up with 493 total lines of data
 
 PCAallsites_subsetvar<-fviz_pca_ind(allsites_subsetvar.pca, label="none", habillage=variables3_allsites$siteID,  # group by the site
              addEllipses=FALSE, ellipse.level=0.75)
