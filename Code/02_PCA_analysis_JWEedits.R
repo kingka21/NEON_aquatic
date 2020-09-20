@@ -1,4 +1,4 @@
-# PCA analysis, Modified 21May2020 by JWEdmonds ## 
+# PCA analysis, Modified 6Aug2020 by JWEdmonds ## 
 #modified by KK on 13Sep2020
 install.packages("factoextra") #install the package if you have not used it before
 library(factoextra) #load library to perform PCA 
@@ -149,7 +149,7 @@ sdev <- Thirteensites_subsetvar.pca$sdev
 var.coord <- t(apply(loadings, 1, var_coord_func, sdev)) 
 print(var.coord[, 1:2])
 
-#### recuce data to 10 sites ####
+#### reduce data to 10 sites ####
 #Created data.frame reduced to 10 sites, using replacement sites (POSE for WALK; BLWA for TOMB; GUIL for CUPE)
 tensites<- filter(variables_subset, 
                                !grepl("CUPE", siteID) & 
@@ -215,7 +215,7 @@ PCAallsites_allvar<-fviz_pca_ind(allsites_allvariables.pca, label="none", habill
 PCAallsites_allvar +ylim(-4,5)+xlim(-7.5, 4.0)
 
 variables3_allsites<-subset(variables2_allsites, select = -c(1,2,4,5,6,7,10,13,14,15,16,17,19,20,21,22,23,26,29,31)) #removing redundant variables#
-allsites_subsetvar.pca<-prcomp(variables3_allsites[, -12],  scale. = T) #perform PCA with reduced dataset (10 sites), without the siteID which is column 12 
+allsites_subsetvar.pca<-prcomp(variables3_allsites[, -12],  scale. = T) #perform PCA with reduced number of variables, without the siteID which is column 12 
 write.csv(variables3_allsites, 'Data/variables_allsites.csv', row.names = FALSE) #checking variables so as to determine you have the correct in next step#
 
 
