@@ -53,7 +53,7 @@ fviz_contrib(Thirteensites_allvariables.pca,
              sort.val = c("desc"), #descending order 
              top = 10) #show top 10
 
-####Reduced number of variables down to 12 ####
+####Reduced number of variables down to 11 ####
 #select out Mg, Mn, DOC, TN, Cl, Ca, DIC, NO3NO2, K, Fe, Na, siteID
 variables_subset<-select(variables2, Mg, Mn, DOC, TN, Cl, Ca, DIC, 'NO3.NO2...N', K, Fe, Na, siteID) #removing redundant variables#
 Thirteensites_subsetvar.pca<-prcomp(variables_subset[, -12], scale=TRUE) #perform PCA with reduced dataset (13 sites), without the siteID which is column 13 
@@ -200,62 +200,102 @@ tensites.hc$desc.var$quanti
 ##look at some sites within each cluster, for each cluster, the top 5 closest individuals to the cluster center is shown
 tensites.hc$desc.ind$para
 
-###################read in surface water data for file with all sites #########################
+###################run PCA for surface water data with all sites #########################
 
-SWgrab_allsites_dat<-read.csv('Data/surface_water_grab_allsites_PIVOT.csv', header = TRUE)
-
+SWgrab_allsites_dat<-read.csv('Data/sw_grab_allsites.csv', header = TRUE)
 
 variables_allsites<-SWgrab_allsites_dat[,4:37] #select only columns with variables for PCA, this is columns 11 through 37 (row 38 has all NA so cancels out all rows if included)
 variables_allsites$siteID<-paste(SWgrab_allsites_dat$siteID) #add siteID column back to the table to be able to group later
-variables2_allsites<-na.omit(variables_allsites) # get rid of rows with NA
-write.csv(variables2_allsites, 'Data/variable_allsites_SW.csv', row.names = FALSE) #checking variables so as to determine you have the correct in next step#
+variables_allsites<-na.omit(variables_allsites) # get rid of rows with NA
 
-allsites_allvariables.pca<-prcomp(variables2_allsites[, -36], scale=TRUE) #perform PCA without the siteID which is column 36
+summary(as.factor(variables_allsites$siteID))
+
+#remove sites that have 3 pointsor less, not enough for an ellipse
+variables_allsites$siteID<-as.factor(variables_allsites$siteID)
+variables2<- dplyr::filter(variables_allsites, 
+                           siteID == "ARIK" |siteID == "BIGC" |
+                             siteID == "BLDE" |siteID == "BLUE"|
+                             siteID == "BLWA"|siteID == "CARI"|
+                             siteID == "COMO"| siteID == "CUPE"| 
+                             siteID == "FLNT" |siteID == "HOPB"| 
+                             siteID == "LECO"| siteID == "LEWI" | 
+                             siteID == "MAYF"| siteID == "MCDI"|
+                             siteID == "MCRA" | siteID == "POSE" |
+                             siteID == "PRIN"|siteID == "WLOU") %>% 
+  droplevels()
+                    
+                    
+summary(variables2$siteID)             
+
+#run PCA
+allsites_allvariables.pca<-prcomp(variables2[, -35], scale=TRUE) #perform PCA without the siteID which is column 35
+
 # graph results with the site grouping, all variables 
-PCAallsites_allvar<-fviz_pca_ind(allsites_allvariables.pca, label="none", habillage=variables2_allsites$siteID,  # group by the site
+PCAallsites_allvar<-fviz_pca_ind(allsites_allvariables.pca, label="none", 
+                                 habillage=variables2$siteID,  # group by the site
              addEllipses=TRUE, ellipse.level=0.75)
-PCAallsites_allvar +ylim(-4,5)+xlim(-7.5, 4.0)
+#PCAallsites_allvar +ylim(-4,5)+xlim(-7.5, 4.0) #adjust axis if needed
 
-variables3_allsites<-subset(variables2_allsites, select = -c(2,3,4,5,6,8,9,10,11,15,16,19,20,21,22,23,25,27,28,29,30,31,34)) #removing redundant variables#
-allsites_subsetvar.pca<-prcomp(variables3_allsites[, -12],  scale=TRUE) #perform PCA with reduced number of variables, without the siteID which is column 12 
-write.csv(variables3_allsites, 'Data/variables_subset_allsites.csv', row.names = FALSE) #checking variables so as to determine you have the correct in next step#
-#End up with 493 total lines of data
+#graph vectors of PCA
+fviz_pca_var(allsites_allvariables.pca,
+             col.var = "contrib", # Color by contributions to the PC
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE)     # Avoid text overlapping
 
-PCAallsites_subsetvar<-fviz_pca_ind(allsites_subsetvar.pca, label="none", habillage=variables3_allsites$siteID,  # group by the site
-             addEllipses=FALSE, ellipse.level=0.75)
-PCAallsites_subsetvar +ylim(-2.5,2.5)+xlim(-3, 3.5)
+#shows the top variables contributing to the 1st and 2nd axis
+#red dotted line shows random
+fviz_contrib(allsites_allvariables.pca, 
+             choice = c("var"), 
+             axes = 1:2, #both PCA axis 
+             sort.val = c("desc"), #descending order 
+             top = 10) #show top 10 
+fviz_contrib(allsites_allvariables.pca, 
+             choice = c("var"), 
+             axes = 1, #1st PCA axis 
+             sort.val = c("desc"), #descending order 
+             top = 10) #show top 10
+fviz_contrib(allsites_allvariables.pca, 
+             choice = c("var"), 
+             axes = 2, #2nd PCA axis 
+             sort.val = c("desc"), #descending order 
+             top = 10) #show top 10
 
+#HCPC cluster analysis 
+pca_result<-PCA(variables2[, -35], scale.unit = TRUE, graph=FALSE) # then data are scaled to unit variance
+allsites.hc<-HCPC(pca_result, graph = TRUE) #can click on where to cut graph
+
+fviz_dend(allsites.hc, 
+          cex = 0.7,                     # Label size
+          palette = "jco",               # Color palette see ?ggpubr::ggpar
+          rect = TRUE, rect_fill = TRUE, # Add rectangle around groups
+          rect_border = "jco",           # Rectangle color
+          labels_track_height = 0.8      # Augment the room for labels
+)
+
+fviz_cluster(allsites.hc,
+             repel = FALSE,            #  label overlapping
+             show.clust.cent = TRUE, # Show cluster centers
+             palette = "jco",         # Color palette see ?ggpubr::ggpar
+             ggtheme = theme_minimal(),
+             main = "Factor map"
+)
+
+## clust number is assigned to each observation 
+clusters<-allsites.hc$data.clust
+clusters$siteID<-variables2$siteID #add back in the siteID to see what sites are in each cluster
+
+##look at the variables that explain clustering the most 
+table<-allsites.hc$desc.var$quanti
+##look at some sites within each cluster, for each cluster, the top 5 closest individuals to the cluster center is shown
+allsites.hc$desc.ind$para
+
+## observations from previous selection of 10 sites
 #LEWI, REDB and PRIN have 8 samples, so they were removed even though they inhabit a very unique PCA space
 #TECR has very few samples, and overlaps with COMO cluster
 #SYC too few samples, overlaps
 #BIGC overlaps with HOPB
 #WLOU has very few samples and overlaps with HOPB
 #OKSR, MCDI, LECO, FLNT, MCRA, BDLE, CARI all overlap quite a bit
-variables4_moresites<- filter(variables3_allsites, !grepl("MCDI", variables3_allsites$siteID) & 
-                                                    !grepl("OKSR", variables3_allsites$siteID) & 
-                                                    !grepl("TECR", variables3_allsites$siteID) & 
-                                                    !grepl("LECO", variables3_allsites$siteID) & 
-                                                    !grepl("CARI", variables3_allsites$siteID) &
-                                                    !grepl("LEWI", variables3_allsites$siteID) &
-                                                    !grepl("PRIN", variables3_allsites$siteID) &
-                                                    !grepl("REDB", variables3_allsites$siteID) &
-                                                    !grepl("WLOU", variables3_allsites$siteID) &
-                                                    !grepl("SYC", variables3_allsites$siteID) &
-                                                    !grepl("MCRA", variables3_allsites$siteID) &
-                                                    !grepl("BLDE", variables3_allsites$siteID) &
-                                                    !grepl("BIGC", variables3_allsites$siteID) &
-                                                    !grepl("FLNT", variables3_allsites$siteID))
-write.csv(variables4_moresites, 'Data/variables4_somesites.csv', row.names = FALSE) #checking variables so as to determine you have the correct in next step#
-
-
-testsites_subsetvar.pca<-prcomp(variables4_moresites[, -12],  scale. = T) #perform PCA with reduced dataset (10 sites), without the siteID which is column 13 
-PCAtestsites_subsetvar<-fviz_pca_ind(testsites_subsetvar.pca, label="none", habillage=variables4_moresites$siteID,  # group by the site
-                                    addEllipses=FALSE, ellipse.level=0.75)
-PCAtestsites_subsetvar +ylim(-3,3)+xlim(-2.5, 5)
-
-# graph results with the site grouping and have vectors displayed, reduced variable set
-fviz_pca_biplot(allsites_subsetvar.pca, label="var", col.var="black", habillage=variables_subset$siteID,  # group by the site
-                addEllipses=TRUE, ellipse.level=0.66)
 
 
 ###################read in Groundwater data for file with 13 sites selected (10 + 3 replacement)#########################
