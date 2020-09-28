@@ -1,7 +1,7 @@
 #### Script for downloading and organizing NEON datasets ##### 
 ### code written by Katelyn King 16-OCT-2019 
 ### code adapted from Bobby Hensley ### 
-###Modified by Jennifer Edmonds 20Sep2020####
+###Modified by Jennifer Edmonds 21Sep2020####
 
 #### load libraries ####
 # install neonUtilities if you have not already 
@@ -145,6 +145,55 @@ write.csv(SWgrab_chem_dat_subsetFINAL_PIVOT, 'Data/surface_water_grab_QAQC.csv',
 
 ################################################################################################################
 
+#All 27 sites: Grab samples of GROUNDWATER chemistry including general chemistry (DOC), anions, cations, and nutrients. streams 26 times per year
+nutrients_GWgrab_allsites <- loadByProduct(dpID="DP1.20092.001", 
+                                           site=c(
+                                             'HOPB','POSE','KING', 'WALK','LECO','MAYF','PRIN',
+                                             'BLDE','COMO','MART', 'BIGC','CARI', 'WLOU', "FLNT", 
+                                             "MCDI", 'LEWI', "BLUE", "TECR", "REDB", "SYCA", 
+                                             "MCRA", "OKSR", "ARIK", "GUIL", "CUPE", "TOMB", "BLWA"
+                                           ),
+                                           startdate="2017-01", 
+                                           enddate="2019-12", 
+                                           package="expanded", #basic will just give you concentrations, #expanded will give you flags 
+                                           check.size = F)  ### check the size of the file before you download it 
+
+for(i in 1:length(nutrients_SWgrab_allsites)) {assign(names(nutrients_GWgrab_allsites)[i], nutrients_GWgrab_allsites[[i]])}   #calls the table waq_instances
+GWgrab_chem_dat_allsites<-as.data.frame(gwc_externalLabDataByAnalyte) #table that has water chem
+GWgrab_info_dat_allsites<-as.data.frame(gwc_fieldSuperParent) #table that has lat/lon and elevation, DO, waterTemp, maxDepth
+write.csv(GWgrab_chem_dat_allsites, 'Data/GW_grab_allsites_unaltered.csv', row.names = FALSE)#contains 24,140 observations
+
+#first step is to remove lines where sampleID ends with .2 or .3#
+GWgrab_chem_dat_allsites_REMOVE<-filter(GWgrab_chem_dat_allsites, !grepl("FIL.3$", sampleID))
+GWgrab_chem_dat_allsites_REMOVE<-filter(GWgrab_chem_dat_allsites_REMOVE, !grepl("FIL.2$", sampleID))
+GWgrab_chem_dat_allsites_REMOVE<-filter(GWgrab_chem_dat_allsites_REMOVE, !grepl("RAW.3$", sampleID))
+GWgrab_chem_dat_allsitesL_REMOVE<-filter(GWgrab_chem_dat_allsites_REMOVE, !grepl("RAW.2$", sampleID))
+GWgrab_chem_dat_allsites_REMOVE<-filter(GWgrab_chem_dat_allsites_REMOVE, !grepl("PCN.3$", sampleID))
+GWgrab_chem_dat_allsites_REMOVE<-filter(GWgrab_chem_dat_allsites_REMOVE, !grepl("PCN.2$", sampleID))
+write.csv(GWgrab_chem_dat_allsites_REMOVE, 'Data/SW_grab_allsites_REMOVE.csv', row.names = FALSE)#contains 21,472 observations
+
+GWgrab_chem_dat_allsites_REMOVE$sampleID<-gsub(".FIL" , "" , GWgrab_chem_dat_allsites_REMOVE$sampleID)
+GWgrab_chem_dat_allsites_REMOVE$sampleID<-gsub(".RAW" , "" , GWgrab_chem_dat_allsites_REMOVE$sampleID)
+GWgrab_chem_dat_allsites_REMOVE$sampleID<-gsub(".PCN" , "" , GWgrab_chem_dat_allsites_REMOVE$sampleID)
+#check file to make sure removal of extensions was completed#
+write.csv(GWgrab_chem_dat_allsites_REMOVE, 'Data/groundwater_grab_allsites.csv', row.names = FALSE)
+
+#Remove flagged data#
+GWgrab_chem_dat_allsites_QF<-filter(GWgrab_chem_dat_allsites_REMOVE, shipmentWarmQF == 0)
+
+#Setting negative values for nutrients to 0#
+GWgrab_chem_dat_allsites_QF[GWgrab_chem_dat_allsites_QF <0] <- 0 #change negative values to 0 
+write.csv(GWgrab_chem_dat_allsites_QF, 'Data/groundwater_grab_allsites_QF.csv', row.names = FALSE)#18,984 observations
+
+#generate new table using pivot data for water chemistry parameters#
+GWgrab_chem_dat_allsites_PIVOT<-pivot_wider(GWgrab_chem_dat_allsites_QF, id_cols= c(siteID, sampleID, collectDate), names_from=analyte, values_from=analyteConcentration)
+
+#check file
+write.csv(GWgrab_chem_dat_allsites_PIVOT, 'Data/groundwater_grab_allsites_PIVOT.csv', row.names = FALSE)
+
+
+
+################################################################################################################
 #Focus sites for groundwater, final 10 sites (+3 replacements), 3 years of data 2017-2019
 GWgrab_FINALsubset <- loadByProduct(dpID="DP1.20092.001", 
                                                site=c('KING','MAYF','COMO',"HOPB","WALK", "MART", "BLUE", "ARIK", "TOMB", "CUPE", "GUIL", "POSE", "BLWA"),

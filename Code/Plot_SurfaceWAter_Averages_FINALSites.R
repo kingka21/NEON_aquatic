@@ -12,7 +12,7 @@ my_pH <- SWgrab_dat %>%
             mean=mean(pH, na.rm=TRUE),
             sd=sd(pH, na.rm=TRUE)
   )
-my_pH$siteID<-ordered(my_pH$siteID, levels=c("MAYF", 'COMO' , 'MART', "HOPB" , 'TOMB' ,'BLWA', 'POSE', 'WALK' , 'CUPE', 'GUIL', 'ARIK', 'KING', 'BLUE'))
+my_pH$siteID<-ordered(my_pH$siteID, levels=c("MAYF", 'COMO' , 'MART', "HOPB" , 'BLWA', 'POSE', 'WALK' , 'CUPE', 'GUIL', 'ARIK', 'KING', 'BLUE'))
 
 
 print(ggplot(my_pH) +
