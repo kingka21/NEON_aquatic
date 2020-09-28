@@ -86,6 +86,9 @@ SWgrab_chem_dat_allsites_QF<-filter(SWgrab_chem_dat_allsites_REMOVE, shipmentWar
 SWgrab_chem_dat_allsites_QF[SWgrab_chem_dat_allsites_QF <0] <- 0 #change negative values to 0 
 write.csv(SWgrab_chem_dat_allsites_QF, 'Data/surface_water_grab_allsites_QF.csv', row.names = FALSE)#23,121 observations
 
+#check for duplicates
+which(duplicated(SWgrab_chem_dat_allsites_QF))
+
 #generate new table using pivot data for water chemistry parameters#
 SWgrab_chem_dat_allsites_PIVOT<-pivot_wider(SWgrab_chem_dat_allsites_QF, id_cols= c(siteID, sampleID, collectDate), names_from=analyte, values_from=analyteConcentration)
 
