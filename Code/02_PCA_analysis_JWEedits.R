@@ -1,6 +1,7 @@
 # PCA analysis, Modified 6Aug2020 by JWEdmonds ## 
-#modified by KK on 13Sep2020
-#modified again by JWE on 20Sep20 when discovered that water chemistry parameters not in same order
+#modified by KK on 13Sep2020; 28Sep 2020, 
+#modified again by JWE on 20Sep20 
+
 install.packages("factoextra") #install the package if you have not used it before
 library(factoextra) #load library to perform PCA 
 library(devtools)
@@ -202,74 +203,71 @@ tensites.hc$desc.ind$para
 
 ###################run PCA for surface water data with all sites #########################
 
-SWgrab_allsites_dat<-read.csv('Data/sw_grab_allsites.csv', header = TRUE)
+#bring in most recent data, QAQC and all sites updated Sep 28 
+sw_all<-read.csv('Data/surface_water_grab_QCQC_ph.csv', header = TRUE)
+SWgrab_allsites_dat<-select(sw_all, -c(sampleID, collectDate, pH)) %>% #remove columns I don't need
+                     data.table:: setnames(old=c("NH4...N", "NO3.NO2...N", "initialSamplepH"), new=c("NH4N", "NO3NO2N", "pH"))
 
-variables_allsites<-SWgrab_allsites_dat[,4:37] #select only columns with variables for PCA, this is columns 11 through 37 (row 38 has all NA so cancels out all rows if included)
-variables_allsites$siteID<-paste(SWgrab_allsites_dat$siteID) #add siteID column back to the table to be able to group later
-variables_allsites<-na.omit(variables_allsites) # get rid of rows with NA
+summary(SWgrab_allsites_dat$siteID)
 
-summary(as.factor(variables_allsites$siteID))
-
-#remove sites that have 3 pointsor less, not enough for an ellipse
-variables_allsites$siteID<-as.factor(variables_allsites$siteID)
-variables2<- dplyr::filter(variables_allsites, 
-                           siteID == "ARIK" |siteID == "BIGC" |
-                             siteID == "BLDE" |siteID == "BLUE"|
-                             siteID == "BLWA"|siteID == "CARI"|
-                             siteID == "COMO"| siteID == "CUPE"| 
-                             siteID == "FLNT" |siteID == "HOPB"| 
-                             siteID == "LECO"| siteID == "LEWI" | 
-                             siteID == "MAYF"| siteID == "MCDI"|
-                             siteID == "MCRA" | siteID == "POSE" |
-                             siteID == "PRIN"|siteID == "WLOU") %>% 
-  droplevels()
+#keep all sites - they all have >20 obs! 
+#sites_w_data<- dplyr::filter(SWgrab_allsites_dat, 
+ #                          siteID == "ARIK" |siteID == "BIGC" |
+  #                           siteID == "BLDE" |siteID == "BLUE"|
+   #                          siteID == "BLWA"|siteID == "CARI"|
+    #                         siteID == "COMO"| 
+     #                        siteID == "FLNT" | siteID == "LECO"|
+      #                      siteID == "LEWI" | siteID == "MART" | 
+       #                      siteID == "MAYF"| siteID == "MCDI"|
+        #                     siteID == "REDB"|
+         #                    siteID == "TOMB") %>% 
+      #                        droplevels()
                     
-                    
-summary(variables2$siteID)             
 
 #run PCA
-allsites_allvariables.pca<-prcomp(variables2[, -35], scale=TRUE) #perform PCA without the siteID which is column 35
+SWgrab_allsites_dat<-na.omit(SWgrab_allsites_dat) # rows where lab pH was not available (from 1504 to 1385)
+allsites.pca<-prcomp(SWgrab_allsites_dat[, -1], scale=TRUE) #perform PCA without the siteID 
 
 # graph results with the site grouping, all variables 
-PCAallsites_allvar<-fviz_pca_ind(allsites_allvariables.pca, label="none", 
-                                 habillage=variables2$siteID,  # group by the site
+fviz_pca_ind(allsites.pca, label="none", 
+                                 habillage=SWgrab_allsites_dat$siteID,  # group by the site
              addEllipses=TRUE, ellipse.level=0.75)
 #PCAallsites_allvar +ylim(-4,5)+xlim(-7.5, 4.0) #adjust axis if needed
 
 #graph vectors of PCA
-fviz_pca_var(allsites_allvariables.pca,
+fviz_pca_var(allsites.pca,
              col.var = "contrib", # Color by contributions to the PC
              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
              repel = TRUE)     # Avoid text overlapping
 
 #shows the top variables contributing to the 1st and 2nd axis
 #red dotted line shows random
-fviz_contrib(allsites_allvariables.pca, 
+fviz_contrib(allsites.pca, 
              choice = c("var"), 
              axes = 1:2, #both PCA axis 
              sort.val = c("desc"), #descending order 
              top = 10) #show top 10 
-fviz_contrib(allsites_allvariables.pca, 
+fviz_contrib(allsites.pca, 
              choice = c("var"), 
              axes = 1, #1st PCA axis 
              sort.val = c("desc"), #descending order 
              top = 10) #show top 10
-fviz_contrib(allsites_allvariables.pca, 
+fviz_contrib(allsites.pca, 
              choice = c("var"), 
              axes = 2, #2nd PCA axis 
              sort.val = c("desc"), #descending order 
              top = 10) #show top 10
 
 #HCPC cluster analysis 
-pca_result<-PCA(variables2[, -35], scale.unit = TRUE, graph=FALSE) # then data are scaled to unit variance
+pca_result<-PCA(SWgrab_allsites_dat[, -1], scale.unit = TRUE, graph=FALSE) # then data are scaled to unit variance
 allsites.hc<-HCPC(pca_result, graph = TRUE) #can click on where to cut graph
 
 fviz_dend(allsites.hc, 
-          cex = 0.7,                     # Label size
+          show_labels = FALSE,                     # Label size
           palette = "jco",               # Color palette see ?ggpubr::ggpar
           rect = TRUE, rect_fill = TRUE, # Add rectangle around groups
-          rect_border = "jco",           # Rectangle color
-          labels_track_height = 0.8      # Augment the room for labels
+          rect_border = "jco"           # Rectangle color
+          #labels_track_height = 0.8      # Augment the room for labels
 )
 
 fviz_cluster(allsites.hc,
@@ -282,12 +280,15 @@ fviz_cluster(allsites.hc,
 
 ## clust number is assigned to each observation 
 clusters<-allsites.hc$data.clust
-clusters$siteID<-variables2$siteID #add back in the siteID to see what sites are in each cluster
+clusters$siteID<-SWgrab_allsites_dat$siteID #add back in the siteID to see what sites are in each cluster
 
 ##look at the variables that explain clustering the most 
-table<-allsites.hc$desc.var$quanti
+allsites.hc$desc.var$quanti
 ##look at some sites within each cluster, for each cluster, the top 5 closest individuals to the cluster center is shown
 allsites.hc$desc.ind$para
+
+#find out what sites are in each cluster
+frequency_clust<-rename(count(clusters, clust, siteID), Freq = n)
 
 ## observations from previous selection of 10 sites
 #LEWI, REDB and PRIN have 8 samples, so they were removed even though they inhabit a very unique PCA space

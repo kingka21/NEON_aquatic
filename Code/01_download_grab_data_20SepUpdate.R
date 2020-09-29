@@ -1,7 +1,8 @@
-#### Script for downloading and organizing NEON datasets ##### 
-### code written by Katelyn King 16-OCT-2019 
-### code adapted from Bobby Hensley ### 
-###Modified by Jennifer Edmonds 21Sep2020####
+#### Script for downloading and organizing NEON datasets
+### code created by Katelyn King 16-OCT-2019, modified by KK on Sep28 
+### code adapted from Bobby Hensley 
+###Modified by Jennifer Edmonds 21Sep2020
+
 
 #### load libraries ####
 # install neonUtilities if you have not already 
@@ -13,8 +14,6 @@ library(neonUtilities)
 library(ggplot2)
 library(dplyr)
 library(tidyr)
-
-
 
 #### load datasets ####
 ## avg: "all" to download all data (default), or number of minutes in the averaging interval. 
@@ -45,8 +44,8 @@ library(tidyr)
 ##      20048.001 = manual discharge measures (about 26/year/site) (correct)
 
 
-###############################################################################################################
-#All 27 sites: Grab samples of surface water chemistry including general chemistry (DOC), anions, cations, and nutrients. streams 26 times per year
+#####All 27 sites surface water grab ####
+#Grab samples of surface water chemistry including general chemistry (DOC), anions, cations, and nutrients. streams 26 times per year
 nutrients_SWgrab_allsites <- loadByProduct(dpID="DP1.20093.001", 
                            site=c(
                              'HOPB','POSE','KING', 'WALK','LECO','MAYF','PRIN',
@@ -55,95 +54,114 @@ nutrients_SWgrab_allsites <- loadByProduct(dpID="DP1.20093.001",
                              "MCRA", "OKSR", "ARIK", "GUIL", "CUPE", "TOMB", "BLWA"
                            ),
                            startdate="2017-01", 
-                           enddate="2019-12", 
+                           enddate="2020-09", 
                            package="expanded", #basic will just give you concentrations, #expanded will give you flags 
                            check.size = F)  ### check the size of the file before you download it 
 
 for(i in 1:length(nutrients_SWgrab_allsites)) {assign(names(nutrients_SWgrab_allsites)[i], nutrients_SWgrab_allsites[[i]])}   #calls the table waq_instances
-SWgrab_chem_dat_allsites<-as.data.frame(swc_externalLabDataByAnalyte) #table that has water chem
+
+SWgrab_chem_dat_allsites<-as.data.frame(swc_externalLabDataByAnalyte) #table that has water chem #contains 23,340 observations
 SWgrab_info_dat_allsites<-as.data.frame(swc_fieldSuperParent) #table that has lat/lon and elevation, DO, waterTemp, maxDepth
-write.csv(SWgrab_chem_dat_allsites, 'Data/SW_grab_allsites_unaltered.csv', row.names = FALSE)#contains 24,140 observations
+SWgrab_lab_dat_allsites<-as.data.frame(swc_domainLabData)#table that has pH values that we can trust
 
 #first step is to remove lines where sampleID ends with .2 or .3#
-SWgrab_chem_dat_allsites_REMOVE<-filter(SWgrab_chem_dat_allsites, !grepl("FIL.3$", sampleID))
-SWgrab_chem_dat_allsites_REMOVE<-filter(SWgrab_chem_dat_allsites_REMOVE, !grepl("FIL.2$", sampleID))
-SWgrab_chem_dat_allsites_REMOVE<-filter(SWgrab_chem_dat_allsites_REMOVE, !grepl("RAW.3$", sampleID))
-SWgrab_chem_dat_allsitesL_REMOVE<-filter(SWgrab_chem_dat_allsites_REMOVE, !grepl("RAW.2$", sampleID))
-SWgrab_chem_dat_allsites_REMOVE<-filter(SWgrab_chem_dat_allsites_REMOVE, !grepl("PCN.3$", sampleID))
-SWgrab_chem_dat_allsites_REMOVE<-filter(SWgrab_chem_dat_allsites_REMOVE, !grepl("PCN.2$", sampleID))
-write.csv(SWgrab_chem_dat_allsites_REMOVE, 'Data/SW_grab_allsites_REMOVE.csv', row.names = FALSE)#contains 21,472 observations
+SWgrab_chem_dat_allsites_QC<-filter(SWgrab_chem_dat_allsites, !grepl("FIL.3$", sampleID))
+SWgrab_chem_dat_allsites_QC<-filter(SWgrab_chem_dat_allsites_QC, !grepl("FIL.2$", sampleID))
+SWgrab_chem_dat_allsites_QC<-filter(SWgrab_chem_dat_allsites_QC, !grepl("RAW.3$", sampleID))
+SWgrab_chem_dat_allsites_QC<-filter(SWgrab_chem_dat_allsites_QC, !grepl("RAW.2$", sampleID))
+SWgrab_chem_dat_allsites_QC<-filter(SWgrab_chem_dat_allsites_QC, !grepl("PCN.3$", sampleID))
+SWgrab_chem_dat_allsites_QC<-filter(SWgrab_chem_dat_allsites_QC, !grepl("PCN.2$", sampleID))
+#contains 60,945 observations
 
-SWgrab_chem_dat_allsites_REMOVE$sampleID<-gsub(".FIL" , "" , SWgrab_chem_dat_allsites_REMOVE$sampleID)
-SWgrab_chem_dat_allsites_REMOVE$sampleID<-gsub(".RAW" , "" , SWgrab_chem_dat_allsites_REMOVE$sampleID)
-SWgrab_chem_dat_allsites_REMOVE$sampleID<-gsub(".PCN" , "" , SWgrab_chem_dat_allsites_REMOVE$sampleID)
-#check file to make sure removal of extensions was completed#
-write.csv(SWgrab_chem_dat_allsites_REMOVE, 'Data/surface_water_grab_allsites.csv', row.names = FALSE)
+SWgrab_chem_dat_allsites_QC$sampleID<-gsub(".FIL" , "" , SWgrab_chem_dat_allsites_QC$sampleID)
+SWgrab_chem_dat_allsites_QC$sampleID<-gsub(".RAW" , "" , SWgrab_chem_dat_allsites_QC$sampleID)
+SWgrab_chem_dat_allsites_QC$sampleID<-gsub(".PCN" , "" , SWgrab_chem_dat_allsites_QC$sampleID)
 
-#Remove flagged data#
-SWgrab_chem_dat_allsites_QF<-filter(SWgrab_chem_dat_allsites_REMOVE, shipmentWarmQF == 0)
+#Remove flagged data, shipmentWarmQF == 0 indicates no flags # 
+SWgrab_chem_dat_allsites_QC<-filter(SWgrab_chem_dat_allsites_QC, shipmentWarmQF == 0)
 
-#Setting negative values for nutrients to 0#
-SWgrab_chem_dat_allsites_QF[SWgrab_chem_dat_allsites_QF <0] <- 0 #change negative values to 0 
-write.csv(SWgrab_chem_dat_allsites_QF, 'Data/surface_water_grab_allsites_QF.csv', row.names = FALSE)#18,984 observations
+#Setting negative values for nutrients to 0# 53269 observations 
+SWgrab_chem_dat_allsites_QC[SWgrab_chem_dat_allsites_QC <0] <- 0 #change negative values to 0 
 
-#generate new table using pivot data for water chemistry parameters#
-SWgrab_chem_dat_allsites_PIVOT<-pivot_wider(SWgrab_chem_dat_allsites_QF, id_cols= c(siteID, sampleID, collectDate), names_from=analyte, values_from=analyteConcentration)
+#generate new table using pivot data for water chemistry parameters# #1652 rows 
 
-#check file
-write.csv(SWgrab_chem_dat_allsites_PIVOT, 'Data/surface_water_grab_allsites_PIVOT.csv', row.names = FALSE)
+SWgrab_chem_dat_allsites_PIVOT<-pivot_wider(SWgrab_chem_dat_allsites_QC, 
+                                            id_cols= c(siteID, sampleID, collectDate), 
+                                            names_from=analyte, 
+                                            values_from=analyteConcentration,
+                                            values_fn = list(analyteConcentration = mean)) ## TDN had one instance where it was repeated, this takes the average of just those
 
+#select only dissolved variables and otheres discussed in meeting on Sept 21,2020
+#left with 18 variables 
+swc_all<-select(SWgrab_chem_dat_allsites_PIVOT, siteID, sampleID, collectDate, Br, Ca, Cl, DIC, DOC, F, Fe, K, Mg, Mn, Na, 'NH4 - N',
+                'NO3+NO2 - N', pH, Si, SO4, TDP, TDS)
 
+swc_all<-na.omit(swc_all) # get rid of rows with NA, 1504
 
-########################################################################################################
+#replaces reported values below the detection limit with a value equal to half the detection limit
+#Bobby Hensley (9/28/2020) 
+swc_all$collectDate<-as.POSIXct(swc_all$collectDate,format="%m/%d/%Y %H:%M", tz="UTC")
 
-#Focus sites for surfacewater, final 10 sites (+3 replacements), 3 years of data 2017-2019
-SWgrab_FINALsubset <- loadByProduct(dpID="DP1.20093.001", 
-                                              site=c('KING','MAYF','COMO',"HOPB","WALK", "MART", "BLUE", "ARIK", "TOMB", "CUPE",'GUIL','POSE','BLWA'),
-                                              startdate="2017-01",  #year and month
-                                              enddate="2019-12", 
-                                              package="expanded", #basic will just give you concentrations, #expanded will give you flags 
-                                              check.size = F)  ### check the size of the file before you download it 
+#' Replace Br non-dectects with half detection limit (0.010)
+for(i in 1:nrow(swc_all)){if(swc_all[i,4]<=0){swc_all[i,4]=0.005}}
+#' Replace Ca non-dectects with half detection limit (0.001)
+for(i in 1:nrow(swc_all)){if(swc_all[i,5]<=0){swc_all[i,5]=0.0005}}
+#' Replace Cl non-dectects with half detection limit (0.010)
+for(i in 1:nrow(swc_all)){if(swc_all[i,6]<=0){swc_all[i,6]=0.005}}
+#' Replace DIC non-dectects with half detection limit (0.100 prior to 2017-02-09, 0.025 after)
+changeDate<-as.POSIXct("02/09/2017 00:00",format="%m/%d/%Y %H:%M", tz="UTC")
+for(i in 1:nrow(swc_all)){if(swc_all[i,7]<=0){if(swc_all[i,3]<=changeDate){swc_all[i,7]=0.050}else{swc_all[i,7]=0.0125}}}
+#' Replace DIC non-dectects with half detection limit (0.100 prior to 2019-05-28, 0.970 after)
+changeDate<-as.POSIXct("05/28/2019 00:00",format="%m/%d/%Y %H:%M", tz="UTC")
+for(i in 1:nrow(swc_all)){if(swc_all[i,8]<=0){if(swc_all[i,3]<=changeDate){swc_all[i,8]=0.050}else{swc_all[i,8]=0.0485}}}
+#' Replace F non-dectects with half detection limit (0.010)
+for(i in 1:nrow(swc_all)){if(swc_all[i,9]<=0){swc_all[i,9]=0.005}}
+#' Replace Fe non-dectects with half detection limit (0.001)
+for(i in 1:nrow(swc_all)){if(swc_all[i,10]<=0){swc_all[i,10]=0.0005}}
+#' Replace K non-dectects with half detection limit (0.001)
+for(i in 1:nrow(swc_all)){if(swc_all[i,11]<=0){swc_all[i,11]=0.0005}}
+#' Replace Mg non-dectects with half detection limit (0.010)
+for(i in 1:nrow(swc_all)){if(swc_all[i,12]<=0){swc_all[i,12]=0.005}}
+#' Replace Mn non-dectects with half detection limit (0.001)
+for(i in 1:nrow(swc_all)){if(swc_all[i,13]<=0){swc_all[i,13]=0.0005}}
+#' Replace Na non-dectects with half detection limit (0.001)
+for(i in 1:nrow(swc_all)){if(swc_all[i,14]<=0){swc_all[i,14]=0.0005}}
+#' Replace NH4N non-dectects with half detection limit (0.020 prior to 2019-07-03, 0.004 after)
+changeDate<-as.POSIXct("05/28/2019 00:00",format="%m/%d/%Y %H:%M", tz="UTC")
+for(i in 1:nrow(swc_all)){if(swc_all[i,15]<=0){if(swc_all[i,3]<=changeDate){swc_all[i,15]=0.010}else{swc_all[i,15]=0.002}}}
+#' Replace NO3NO2 non-dectects with half detection limit (0.027)
+for(i in 1:nrow(swc_all)){if(swc_all[i,16]<=0){swc_all[i,16]=0.0135}}
+#' Replace Si non-dectects with half detection limit (0.010)
+for(i in 1:nrow(swc_all)){if(swc_all[i,18]<=0){swc_all[i,18]=0.005}}
+#' Replace SO4 non-dectects with half detection limit (0.010)
+for(i in 1:nrow(swc_all)){if(swc_all[i,19]<=0){swc_all[i,19]=0.005}}
+#' Replace TDP non-dectects with half detection limit (0.001)
+for(i in 1:nrow(swc_all)){if(swc_all[i,20]<=0){swc_all[i,20]=0.0005}}
+#' Replace TDS non-dectects with half detection limit (0.100)
+for(i in 1:nrow(swc_all)){if(swc_all[i,21]<=0){swc_all[i,21]=0.050}}
 
+#save file
+write.csv(swc_all, 'Data/surface_water_grab_QAQC.csv', row.names = FALSE)
 
-for(i in 1:length(SWgrab_FINALsubset)) {assign(names(SWgrab_FINALsubset)[i], SWgrab_FINALsubset[[i]])}   #calls the table waq_instances
-SWgrab_chem_dat_subsetFINAL<-as.data.frame(swc_externalLabDataByAnalyte) #table that has water chem
-SWgrab_info_dat_subsetFINAL<-as.data.frame(swc_fieldSuperParent) #table that has lat/lon and elevation, DO, waterTemp, maxDepth
-write.csv(SWgrab_chem_dat_subsetFINAL, 'Data/surface_water_grab_subsetFINAL_NoModification.csv', row.names = FALSE)
+##Join tables containing chemistry data and pH domain data##
+#first remove all sample lines in domain data containing ANC
+SWgrab_lab_dat_allsites_noANC<-filter(SWgrab_lab_dat_allsites, !grepl(".ANC", domainSampleID))
 
-#32,521 observations (13 sites) in initial download of surface water chemistry, grab samples
-#first step is to remove lines where sampleID ends with .2 or .3
-SWgrab_chem_dat_subsetFINAL_REMOVE<-filter(SWgrab_chem_dat_subsetFINAL, !grepl("FIL.3$", sampleID))
-SWgrab_chem_dat_subsetFINAL_REMOVE<-filter(SWgrab_chem_dat_subsetFINAL_REMOVE, !grepl("FIL.2$", sampleID))
-SWgrab_chem_dat_subsetFINAL_REMOVE<-filter(SWgrab_chem_dat_subsetFINAL_REMOVE, !grepl("RAW.3$", sampleID))
-SWgrab_chem_dat_subsetFINAL_REMOVE<-filter(SWgrab_chem_dat_subsetFINAL_REMOVE, !grepl("RAW.2$", sampleID))
-SWgrab_chem_dat_subsetFINAL_REMOVE<-filter(SWgrab_chem_dat_subsetFINAL_REMOVE, !grepl("PCN.3$", sampleID))
-SWgrab_chem_dat_subsetFINAL_REMOVE<-filter(SWgrab_chem_dat_subsetFINAL_REMOVE, !grepl("PCN.2$", sampleID))
+#next remove all sample lines in domain data containing ALK.2 and REP.2 and REP.3 and .1
+SWgrab_lab_dat_allsites_QC<-filter(SWgrab_lab_dat_allsites_noANC, !grepl(".ALK.2", domainSampleID))
+SWgrab_lab_dat_allsites_QC<-filter(SWgrab_lab_dat_allsites_QC, !grepl(".REP2", domainSampleID))
+SWgrab_lab_dat_allsites_QC<-filter(SWgrab_lab_dat_allsites_QC, !grepl(".REP3", domainSampleID))
+SWgrab_lab_dat_allsites_QC<-filter(SWgrab_lab_dat_allsites_QC, !grepl("ALK.1", domainSampleID))
 
-#28,158 observations, check file to make sure removal of lines with FIL.3, FIL.2, RAW.3, RAW.2, PCN.3, and PCN.2 was completed#
-write.csv(SWgrab_chem_dat_subsetFINAL_REMOVE, 'Data/surface_water_grab_subsetFINAL_REMOVED.csv', row.names = FALSE)
+#Remove all columns except those needed to meld tables, leaving only pH from domain dataset
+SWgrab_lab_pH_allsites<-select(SWgrab_lab_dat_allsites_QC, parentSampleID, initialSamplepH) 
 
-SWgrab_chem_dat_subsetFINAL_REMOVE$sampleID<-gsub(".FIL" , "" , SWgrab_chem_dat_subsetFINAL_REMOVE$sampleID)
-SWgrab_chem_dat_subsetFINAL_REMOVE$sampleID<-gsub(".RAW" , "" , SWgrab_chem_dat_subsetFINAL_REMOVE$sampleID)
-SWgrab_chem_dat_subsetFINAL_REMOVE$sampleID<-gsub(".PCN" , "" , SWgrab_chem_dat_subsetFINAL_REMOVE$sampleID)
-#check file to make sure removal of extensions was completed#
-write.csv(SWgrab_chem_dat_subsetFINAL_REMOVE, 'Data/surface_water_grab_subsetFINAL.csv', row.names = FALSE)
+#join table with external lab data with table from domain lab that has pH in it
+SWgrab_chem_dat_allsites_pH <- left_join(swc_all, SWgrab_lab_pH_allsites,  by =c("sampleID" = "parentSampleID"))
 
-#remove all values with shipmentWarmQF=1, reduced to 16,721#
-SWgrab_chem_dat_subsetFINAL_QF <-filter(SWgrab_chem_dat_subsetFINAL_REMOVE, shipmentWarmQF == 0)
+write.csv(SWgrab_chem_dat_allsites_pH, 'Data/surface_water_grab_QCQC_ph.csv', row.names = FALSE)
 
-#Setting negative values for nutrients to 0#
-SWgrab_chem_dat_subsetFINAL_QF[SWgrab_chem_dat_subsetFINAL_QF <0] <- 0 #change negative values to 0 
-
-#24,212 observations, check file to make sure removal of flagged data and zeros was completed#
-write.csv(SWgrab_chem_dat_subsetFINAL_QF, 'Data/surface_water_grab_subsetFINAL_QF.csv', row.names = FALSE)
-
-#generate new table using pivot data for water chemistry parameters#
-SWgrab_chem_dat_subsetFINAL_PIVOT<-pivot_wider(SWgrab_chem_dat_subsetFINAL_QF, id_cols= c(siteID, sampleID, collectDate), names_from=analyte, values_from=analyteConcentration)
-
-#check file to make sure pivot was executed properly"
-write.csv(SWgrab_chem_dat_subsetFINAL_PIVOT, 'Data/surface_water_grab_QAQC.csv', row.names = FALSE)
-
-################################################################################################################
+###### Ground Water #############################################################################################
 
 #All 27 sites: Grab samples of GROUNDWATER chemistry including general chemistry (DOC), anions, cations, and nutrients. streams 26 times per year
 nutrients_GWgrab_allsites <- loadByProduct(dpID="DP1.20092.001", 
@@ -192,46 +210,7 @@ GWgrab_chem_dat_allsites_PIVOT<-pivot_wider(GWgrab_chem_dat_allsites_QF, id_cols
 write.csv(GWgrab_chem_dat_allsites_PIVOT, 'Data/groundwater_grab_allsites_PIVOT.csv', row.names = FALSE)
 
 
-
-################################################################################################################
-#Focus sites for groundwater, final 10 sites (+3 replacements), 3 years of data 2017-2019
-GWgrab_FINALsubset <- loadByProduct(dpID="DP1.20092.001", 
-                                               site=c('KING','MAYF','COMO',"HOPB","WALK", "MART", "BLUE", "ARIK", "TOMB", "CUPE", "GUIL", "POSE", "BLWA"),
-                                               startdate="2017-01", 
-                                               enddate="2019-12", 
-                                               package="expanded", #basic will just give you concentrations, #expanded will give you flags 
-                                               check.size = F)  ### check the size of the file before you download it 
-
-for(i in 1:length(GWgrab_FINALsubset)) {assign(names(GWgrab_FINALsubset)[i], GWgrab_FINALsubset[[i]])}   #calls the table waq_instances
-GWgrab_chem_dat_subsetFINAL<-as.data.frame(gwc_externalLabDataByAnalyte) #table that has water chem in groundwater
-GWgrab_info_dat_subsetFINAL<-as.data.frame(gwc_fieldSuperParent) #table that has lat/lon and elevation, DO, waterTemp, maxDepth
-
-#6,390 observations in the initial downloaded data set for groundwater grab samples, water chemistry#
-write.csv(GWgrab_chem_dat_subsetFINAL, 'Data/groundwater_grab_subsetFINAL_NOMODIFICATION.csv', row.names = FALSE)
-#There are no replicate observations in the groundwater dataset
-#Remove extensions on samplesID#
-GWgrab_chem_dat_subsetFINAL$sampleID<-gsub(".FIL" , "" , GWgrab_chem_dat_subsetFINAL$sampleID)
-GWgrab_chem_dat_subsetFINAL$sampleID<-gsub(".RAW" , "" , GWgrab_chem_dat_subsetFINAL$sampleID)
-GWgrab_chem_dat_subsetFINAL$sampleID<-gsub(".PCN" , "" , GWgrab_chem_dat_subsetFINAL$sampleID)
-#check file to make sure removal of extensions was completed#
-write.csv(GWgrab_chem_dat_subsetFINAL, 'Data/groundwater_grab_subsetFINAL_REMOVED.csv', row.names = FALSE)
-
-# following flagging removal#
-GWgrab_chem_dat_subsetFINAL_QF <-filter(GWgrab_chem_dat_subsetFINAL, shipmentWarmQF == 0)
-
-#Setting negative values for nutrients to 0#
-GWgrab_chem_dat_subsetFINAL_QF[GWgrab_chem_dat_subsetFINAL_QF <0] <- 0 #change negative values to 0 
-
-#5,778 observations following removal of flagged data#
-write.csv(GWgrab_chem_dat_subsetFINAL_QF_noNA, 'Data/groundwater_grab_subsetFINAL_QF.csv', row.names = FALSE)
-
-#generate new table using pivot data for groundwater chemistry parameters#
-GWgrab_chem_dat_subsetFINAL_PIVOT<-pivot_wider(GWgrab_chem_dat_subsetFINAL_QF, id_cols= c(siteID, collectDate, sampleID), names_from=analyte, values_from=analyteConcentration)
-
-#write datafrom from memory to csv file"
-write.csv(GWgrab_chem_dat_subsetFINAL_PIVOT, 'Data/groundwater_grab_QAQC.csv', row.names = FALSE)
-
-############################################################################################################################
+#####Discharge #######################################################################################################################
 
 #get discharge data for focus 10 focus sites (+3 replacement sites), taken manually 
 discharge_grab_subsetFINAL <- loadByProduct(dpID="DP1.20048.001", 
@@ -247,312 +226,3 @@ stage_subsetFINAL<-as.data.frame(dsc_fieldData)#table tht has stage readings fro
 
 #These dataframes are Level 1 data, need to convert to Level 2 data using conv.calc.Q function before using in further analyses# 
 
-##############     END OF CODE EDITED 24May2020   ###########################################################
-#############################################################################################################
-
-#get chl-a data from surface water grab smaples 
-chl_grab <- loadByProduct(dpID="DP1.20163.001", 
-                          site=c(
-                            'HOPB','POSE','KING', 'WALK','LECO','MAYF','PRIN',
-                            'BLDE','COMO','MART', 'BIGC','CARI', 'WLOU', "FLNT", 
-                            "MCDI", 'LEWI', "BLUE", "TECR", "REDB", "SYCA", 
-                            "MCRA", "OKSR", "ARIK", "GUIL", "CUPE", "TOMB", "BLWA"
-                          ),
-                          startdate="2012-01", 
-                          enddate="2019-09", 
-                          package="expanded", #basic will just give you concentrations, #expanded will give you flags 
-                          check.size = F)  ### check the size of the file before you download it 
-
-#get isotope data from surface water grab smaples 
-iso_grab <- loadByProduct(dpID="DP1.20206.001", 
-                          site=c(
-                            'HOPB','POSE','KING', 'WALK','LECO','MAYF','PRIN',
-                            'BLDE','COMO','MART', 'BIGC','CARI', 'WLOU', "FLNT", 
-                            "MCDI", 'LEWI', "BLUE", "TECR", "REDB", "SYCA", 
-                            "MCRA", "OKSR", "ARIK", "GUIL", "CUPE", "TOMB", "BLWA"
-                          ),
-                          startdate="2012-01", 
-                          enddate="2019-09", 
-                          package="expanded", #basic will just give you concentrations, #expanded will give you flags 
-                          check.size = F)  ### check the size of the file before you download it 
-
-write.csv(grab_chl_dat, 'Data/surface_water_chla_grab.csv', row.names = FALSE)
-
-#############################################################
-#### read in saved data and do some exploratory analysis #### 
-#############################################################
-
-#read in chem data and info for each site to do analysis or graph 
-#note sampleID in grab_dat and parentSampleID in grab_info are the identifiers to join
-grab_dat<-read.csv('Data/surface_water_grab.csv', header = TRUE)
-grab_info<-read.csv('Data/grab_info.csv', header = TRUE)
-grab_chl<-read.csv('Data/surface_water_chla_grab.csv', header = TRUE) ##maybe named location can help join?
-grab_discharge<-read.csv('Data/grab_discharge.csv', header = TRUE)
-
-### Extracts date only to a new column 
-grab_dat$DATE<-as.Date(grab_dat$collectDate,format="%Y-%m-%d")
-grab_discharge$DATE<-as.Date(grab_discharge$collectDate,format="%Y-%m-%d")
-
-### select out only needed columns from these tables and join all tables into one 
-grab_dat<-subset(grab_dat, select = -c(namedLocation, collectDate, laboratoryName, coolerTemp, #this function you list columns to remove
-                                       sampleCondition, remarks, shipmentWarmQF, externalLabDataQF, 
-                                       receivedBy, shipmentCondition, shipmentLateQF)) 
-grab_info<-select(grab_info, decimalLatitude, decimalLongitude, elevation, parentSampleID, dissolvedOxygen, specificConductance, waterTemp)
-grab_discharge<-select(grab_discharge, siteID, DATE, totalDischarge)
-grab_chl<-select(grab_chl, siteID, collectDate, analyte, analyteConcentration) # function lists columns that I want to save
-## need to rotate table with chl data and select out chla
-grab_chl2<-tidyr::pivot_wider(grab_chl, id_cols = c(siteID,collectDate), names_from = analyte,
-            values_from = analyteConcentration)  ### need to figure out which site along the reach to choose
-
-#join tables into one big table 
-sw_data<-left_join(grab_dat, grab_info, by = c("sampleID" = "parentSampleID")) 
-test <-left_join(grab_dat, grab_discharge, by = c("siteID", "DATE")) #want to match observances by site and date
-
-
-#### exploring variation within a site across years (temporal) #### 
-HOPB<- filter(grab_dat, siteID == "HOPB")
-plot(HOPB$DATE, HOPB$waterTotalOrganicCarbon, type='l')  
-
-#all sites 
-ggplot(data = grab_dat, aes(x=DATE, y=waterTotalOrganicCarbon)) + geom_line(aes(colour=siteID))
-
-#select out only 2016-current #seems to messy to actually use 
-grab_dat$YEAR<-lubridate::year(grab_dat$DATE)
-recent_years<-filter(grab_dat, YEAR >= 2016)
-ggplot(data = recent_years, aes(x=DATE, y=waterTotalOrganicCarbon)) + geom_line(aes(colour=siteID))
-
-
-#### Graphing 10 sites of interest for exploring variation across sites (spatial) #### 
-#graph bar plot with error bars 
-grab_dat<-read.csv('Data/surface_water_grab_subsetCOMBINED.csv', header = TRUE)
-grab_info<-read.csv('Data/grab_info_subsetCOMBINED.csv', header = TRUE)
-
-#pH 
-my_pH <- grab_dat %>%
-  group_by (siteID) %>%
-  summarise( 
-    n=n(),
-    mean=mean(pH, na.rm=TRUE),
-    sd=sd(pH, na.rm=TRUE)
-  )
-my_pH$siteID<-ordered(my_pH$siteID, levels=c("MAYF", 'COMO' , 'MART', "HOPB" , 'TOMB' , 'WALK' , 'CUPE', 'ARIK', 'KING', 'BLUE'))
-
-
-
-print(ggplot(my_pH) +
-  geom_bar( aes(x=siteID, y=mean), stat= "identity", fill="skyblue") +
-  geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
-  ylab("pH") + theme(axis.text.x = element_text(angle = 90)) 
-
-# conductivity
-my_con <- grab_dat %>%
-  group_by(siteID) %>%
-  summarise( 
-    n=n(),
-    mean=mean(externalConductance, na.rm=TRUE),
-    sd=sd(externalConductance, na.rm=TRUE)
-  )
-my_con$siteID<-ordered(my_con$siteID, levels=c("MAYF", 'COMO' , 'MART', "HOPB" , 'TOMB' , 'WALK' , 'CUPE', 'ARIK', 'KING', 'BLUE'))
-
-
-ggplot(my_con) +
-  geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
-  geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3) +
-  theme(axis.text.x = element_text(angle = 90)) +
-  ylab("conductivity")
-
-# "waterChlorine"
-my_Cl <- grab_dat %>%
-  group_by(siteID) %>%
-  summarise( 
-    n=n(),
-    mean=mean(waterChlorine, na.rm=TRUE),
-    sd=sd(waterChlorine, na.rm=TRUE)
-  )
-my_Cl$siteID<-ordered(my_Cl$siteID, levels=c("MAYF", 'COMO' , 'MART', "HOPB" , 'TOMB' , 'WALK' , 'CUPE', 'ARIK', 'KING', 'BLUE'))
-
-
-print(ggplot(my_Cl) +
-        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
-        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
-  ylab("Chlorine") + theme(axis.text.x = element_text(angle = 90))
-
-#"waterIron"  
-my_iron <- grab_dat %>%
-  group_by(siteID) %>%
-  summarise( 
-    n=n(),
-    mean=mean(waterIron, na.rm=TRUE),
-    sd=sd(waterIron, na.rm=TRUE)
-  )
-my_iron$siteID<-ordered(my_iron$siteID, levels=c("MAYF", 'COMO' , 'MART', "HOPB" , 'TOMB' , 'WALK' , 'CUPE', 'ARIK', 'KING', 'BLUE'))
-
-
-print(ggplot(my_iron) + 
-        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") + 
-        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
-        ylab("iron") + theme(axis.text.x = element_text(angle = 90)) + ylim(-0.07, 0.72)
-
-#"dissolvedOrganicCarbon" 
-my_DOC <- grab_dat %>%
-  group_by(siteID) %>%
-  summarise( 
-    n=n(),
-    mean=mean(dissolvedOrganicCarbon, na.rm=TRUE),
-    sd=sd(dissolvedOrganicCarbon, na.rm=TRUE)
-  )
-my_DOC$siteID<-ordered(my_DOC$siteID, levels=c("MAYF", 'COMO' , 'MART', "HOPB" , 'TOMB' , 'WALK' , 'CUPE', 'ARIK', 'KING', 'BLUE'))
-
-print(ggplot(my_DOC) +
-        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
-        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
-  ylab("DOC") + theme(axis.text.x = element_text(angle = 90))
-
-
-#"waterManganese"  
-my_Mn <- grab_dat %>%
-  group_by(siteID) %>%
-  summarise( 
-    n=n(),
-    mean=mean(waterManganese, na.rm=TRUE),
-    sd=sd(waterManganese, na.rm=TRUE)
-  )
-my_Mn$siteID<-ordered(my_Mn$siteID, levels=c("MAYF", 'COMO' , 'MART', "HOPB" , 'TOMB' , 'WALK' , 'CUPE', 'ARIK', 'KING', 'BLUE'))
-
-
-print(ggplot(my_Mn) +
-        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
-        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
-  ylab("Manganese") + theme(axis.text.x = element_text(angle = 90)) + ylim(-0.01, 0.04)
-
-
-# "waterPotassium"      
-my_K <- grab_dat %>%
-  group_by(siteID) %>%
-  summarise( 
-    n=n(),
-    mean=mean(waterPotassium, na.rm=TRUE),
-    sd=sd(waterPotassium, na.rm=TRUE)
-  )
-my_K$siteID<-ordered(my_K$siteID, levels=c("MAYF", 'COMO' , 'MART', "HOPB" , 'TOMB' , 'WALK' , 'CUPE', 'ARIK', 'KING', 'BLUE'))
-
-
-print(ggplot(my_K) +
-        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
-        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
-  ylab("Potassium") + theme(axis.text.x = element_text(angle = 90)) + ylim(-0.3, 3)
-
-# "waterSodium"      
-my_Na <- grab_dat %>%
-  group_by(siteID) %>%
-  summarise( 
-    n=n(),
-    mean=mean(waterSodium, na.rm=TRUE),
-    sd=sd(waterSodium, na.rm=TRUE)
-  )
-my_Na$siteID<-ordered(my_Na$siteID, levels=c("MAYF", 'COMO' , 'MART', "HOPB" , 'TOMB' , 'WALK' , 'CUPE', 'ARIK', 'KING', 'BLUE'))
-
-
-print(ggplot(my_Na) +
-        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
-        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
-  ylab("Sodium") + theme(axis.text.x = element_text(angle = 90)) + ylim(0, 18)
-
-
-# "waterFluorine"      
-my_F <- grab_dat %>%
-  group_by(siteID) %>%
-  summarise( 
-    n=n(),
-    mean=mean(waterFluorine, na.rm=TRUE),
-    sd=sd(waterFluorine, na.rm=TRUE)
-  )
-my_F$siteID<-ordered(my_F$siteID, levels=c("MAYF", 'COMO' , 'MART', "HOPB" , 'TOMB' , 'WALK' , 'CUPE', 'ARIK', 'KING', 'BLUE'))
-
-
-print(ggplot(my_F) +
-        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
-        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
-  ylab("Fluorine") + theme(axis.text.x = element_text(angle = 90)) + ylim(-0.07, 0.75)
-
-# "waterCalcium"      
-my_Ca <- grab_dat %>%
-  group_by(siteID) %>%
-  summarise( 
-    n=n(),
-    mean=mean(waterCalcium, na.rm=TRUE),
-    sd=sd(waterCalcium, na.rm=TRUE)
-  )
-my_Ca$siteID<-ordered(my_Ca$siteID, levels=c("MAYF", 'COMO' , 'MART', "HOPB" , 'TOMB' , 'WALK' , 'CUPE', 'ARIK', 'KING', 'BLUE'))
-
-
-print(ggplot(my_Ca) +
-        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
-        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
-  ylab("Calcium") + theme(axis.text.x = element_text(angle = 90)) + ylim(-0.7, 116)
-
-# "dissolvedInorganicCarbon"      
-my_DIC <- grab_dat %>%
-  group_by(siteID) %>%
-  summarise( 
-    n=n(),
-    mean=mean(dissolvedInorganicCarbon, na.rm=TRUE),
-    sd=sd(dissolvedInorganicCarbon, na.rm=TRUE)
-  )
-my_DIC$siteID<-ordered(my_DIC$siteID, levels=c("MAYF", 'COMO' , 'MART', "HOPB" , 'TOMB' , 'WALK' , 'CUPE', 'ARIK', 'KING', 'BLUE'))
-
-
-print(ggplot(my_DIC) +
-        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
-        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
-  ylab("DIC") + theme(axis.text.x = element_text(angle = 90)) + ylim(-0.7, 100)
-
-# "waterMagnesium"      
-my_Mg <- grab_dat %>%
-  group_by(siteID) %>%
-  summarise( 
-    n=n(),
-    mean=mean(waterMagnesium, na.rm=TRUE),
-    sd=sd(waterMagnesium, na.rm=TRUE)
-  )
-my_Mg$siteID<-ordered(my_Mg$siteID, levels=c("MAYF", 'COMO' , 'MART', "HOPB" , 'TOMB' , 'WALK' , 'CUPE', 'ARIK', 'KING', 'BLUE'))
-
-
-print(ggplot(my_Mg) +
-        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
-        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
-  ylab("Magnesium") + theme(axis.text.x = element_text(angle = 90)) + ylim(-0.7, 41)
-
-# "waterNitrateAndNitriteN"      
-my_NitrateNitrite <- grab_dat %>%
-  group_by(siteID) %>%
-  summarise( 
-    n=n(),
-    mean=mean(waterNitrateAndNitriteN, na.rm=TRUE),
-    sd=sd(waterNitrateAndNitriteN, na.rm=TRUE)
-  )
-my_NitrateNitrite$siteID<-ordered(my_NitrateNitrite$siteID, levels=c("MAYF", 'COMO' , 'MART', "HOPB" , 'TOMB' , 'WALK' , 'CUPE', 'ARIK', 'KING', 'BLUE'))
-
-
-print(ggplot(my_NitrateNitrite) +
-        geom_bar( aes(x=siteID, y=mean), stat="identity", fill="skyblue") +
-        geom_errorbar( aes(x=siteID, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3)) + 
-  ylab("Nitrate+Nitrite") + theme(axis.text.x = element_text(angle = 90)) + ylim(-0.04, 0.46)
-
-##### other tips from Bobby 
-#### Seperates measurements by location 
-##  Upstream = 101              Downstream = 102
-##  US overhanging = 111        DS overhanging = 112
-##  Lake/river buoy = 103
-##  Lake inlet = 130            Lake outlet = 140
-##  NOTE: SUNA and fDOM only at downstream stream station or lake/river buoy
-##  NOTE: function removes values, so enter term for locations you DON'T want
-wqvalues101<-wqvalues[(wqvalues$horizontalPosition=="101"),]
-wqvalues102<-wqvalues[(wqvalues$horizontalPosition=="102"),]
-
-### Plots data ###
-plot(wqvalues101$startDateTime,wqvalues101$dissolvedOxygen,type="l",col="blue",main="ARIK DO",xlab="Date",ylab="DO (mg/L)")
-lines(wqvalues102$startDateTime,wqvalues102$dissolvedOxygen,col="red")
-grid(nx=NULL,ny=NULL, col="lightgray",lty="dotted",lwd=par("lwd"), equilogs=TRUE)
-legend("bottomleft",legend=c("Upstream", "Downstream"),
-       col=c("blue", "red"), lty=1:1, cex=0.8)
