@@ -1,6 +1,8 @@
-# PCA analysis, Modified 6Aug2020 by JWEdmonds ## 
-#modified by KK on 13Sep2020; 28Sep 2020, 
-#modified again by JWE on 20Sep20 
+# PCA analysis 
+#Created by KK  March 30, 2020
+#Modified 6Aug2020 by JWEdmonds, 20Sep20  ## 
+#modified by KK on 13Sep2020; 28Sep 2020, Oct 5, 2020 
+
 
 install.packages("factoextra") #install the package if you have not used it before
 library(factoextra) #load library to perform PCA 
@@ -213,7 +215,7 @@ tensites.hc$desc.ind$para
 
 #bring in most recent data, QAQC and all sites updated Sep 28 
 sw_all<-read.csv('Data/surface_water_grab_QCQC_ph.csv', header = TRUE)
-SWgrab_allsites_dat<-select(sw_all, -c(sampleID, collectDate, pH)) %>% #remove columns I don't need
+SWgrab_allsites_dat<-select(sw_all, -c(sampleID, collectDate, pH, TDS)) %>% #remove columns I don't need
                      data.table:: setnames(old=c("NH4...N", "NO3.NO2...N", "initialSamplepH"), new=c("NH4N", "NO3NO2N", "pH"))
 
 summary(SWgrab_allsites_dat$siteID)
@@ -297,7 +299,6 @@ allsites.hc$desc.ind$para
 
 #find out what sites are in each cluster
 frequency_clust<-rename(count(clusters, clust, siteID), Freq = n)
-
 
 
 #### GW data all sites #### 
