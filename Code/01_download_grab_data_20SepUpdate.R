@@ -172,42 +172,83 @@ nutrients_GWgrab_allsites <- loadByProduct(dpID="DP1.20092.001",
                                              "MCRA", "OKSR", "ARIK", "GUIL", "CUPE", "TOMB", "BLWA"
                                            ),
                                            startdate="2017-01", 
-                                           enddate="2019-12", 
+                                           enddate="2020-09", 
                                            package="expanded", #basic will just give you concentrations, #expanded will give you flags 
                                            check.size = F)  ### check the size of the file before you download it 
 
-for(i in 1:length(nutrients_SWgrab_allsites)) {assign(names(nutrients_GWgrab_allsites)[i], nutrients_GWgrab_allsites[[i]])}   #calls the table waq_instances
+for(i in 1:length(nutrients_GWgrab_allsites)) {assign(names(nutrients_GWgrab_allsites)[i], nutrients_GWgrab_allsites[[i]])}   #calls the table waq_instances
 GWgrab_chem_dat_allsites<-as.data.frame(gwc_externalLabDataByAnalyte) #table that has water chem
 GWgrab_info_dat_allsites<-as.data.frame(gwc_fieldSuperParent) #table that has lat/lon and elevation, DO, waterTemp, maxDepth
 write.csv(GWgrab_chem_dat_allsites, 'Data/GW_grab_allsites_unaltered.csv', row.names = FALSE)#contains 24,140 observations
 
-#first step is to remove lines where sampleID ends with .2 or .3#
-GWgrab_chem_dat_allsites_REMOVE<-filter(GWgrab_chem_dat_allsites, !grepl("FIL.3$", sampleID))
-GWgrab_chem_dat_allsites_REMOVE<-filter(GWgrab_chem_dat_allsites_REMOVE, !grepl("FIL.2$", sampleID))
-GWgrab_chem_dat_allsites_REMOVE<-filter(GWgrab_chem_dat_allsites_REMOVE, !grepl("RAW.3$", sampleID))
-GWgrab_chem_dat_allsitesL_REMOVE<-filter(GWgrab_chem_dat_allsites_REMOVE, !grepl("RAW.2$", sampleID))
-GWgrab_chem_dat_allsites_REMOVE<-filter(GWgrab_chem_dat_allsites_REMOVE, !grepl("PCN.3$", sampleID))
-GWgrab_chem_dat_allsites_REMOVE<-filter(GWgrab_chem_dat_allsites_REMOVE, !grepl("PCN.2$", sampleID))
-write.csv(GWgrab_chem_dat_allsites_REMOVE, 'Data/SW_grab_allsites_REMOVE.csv', row.names = FALSE)#contains 21,472 observations
-
-GWgrab_chem_dat_allsites_REMOVE$sampleID<-gsub(".FIL" , "" , GWgrab_chem_dat_allsites_REMOVE$sampleID)
-GWgrab_chem_dat_allsites_REMOVE$sampleID<-gsub(".RAW" , "" , GWgrab_chem_dat_allsites_REMOVE$sampleID)
-GWgrab_chem_dat_allsites_REMOVE$sampleID<-gsub(".PCN" , "" , GWgrab_chem_dat_allsites_REMOVE$sampleID)
-#check file to make sure removal of extensions was completed#
-write.csv(GWgrab_chem_dat_allsites_REMOVE, 'Data/groundwater_grab_allsites.csv', row.names = FALSE)
+GWgrab_chem_dat_allsites$sampleID<-gsub(".FIL" , "" , GWgrab_chem_dat_allsites$sampleID)
+GWgrab_chem_dat_allsites$sampleID<-gsub(".RAW" , "" , GWgrab_chem_dat_allsites$sampleID)
+GWgrab_chem_dat_allsites$sampleID<-gsub(".PCN" , "" , GWgrab_chem_dat_allsites$sampleID)
 
 #Remove flagged data#
-GWgrab_chem_dat_allsites_QF<-filter(GWgrab_chem_dat_allsites_REMOVE, shipmentWarmQF == 0)
+GWgrab_chem_dat_allsites_QF<-dplyr::filter(GWgrab_chem_dat_allsites, shipmentWarmQF == 0) 
 
 #Setting negative values for nutrients to 0#
-GWgrab_chem_dat_allsites_QF[GWgrab_chem_dat_allsites_QF <0] <- 0 #change negative values to 0 
-write.csv(GWgrab_chem_dat_allsites_QF, 'Data/groundwater_grab_allsites_QF.csv', row.names = FALSE)#18,984 observations
+GWgrab_chem_dat_allsites_QF[GWgrab_chem_dat_allsites_QF <0] <- 0 #change negative values to 0  #Jennifer got 18,984 observations
 
-#generate new table using pivot data for water chemistry parameters#
-GWgrab_chem_dat_allsites_PIVOT<-pivot_wider(GWgrab_chem_dat_allsites_QF, id_cols= c(siteID, sampleID, collectDate), names_from=analyte, values_from=analyteConcentration)
+#generate new table using pivot data for parameters# there are multiple ground water wells so we take the mean
+GWgrab_chem_dat_allsites_PIVOT<-pivot_wider(GWgrab_chem_dat_allsites_QF, 
+                                            id_cols= c(siteID, sampleID, collectDate), 
+                                            names_from=analyte, 
+                                            values_from=analyteConcentration,
+                                            values_fn = list(analyteConcentration = mean)) 
 
-#check file
-write.csv(GWgrab_chem_dat_allsites_PIVOT, 'Data/groundwater_grab_allsites_PIVOT.csv', row.names = FALSE)
+
+#select variables to match the surface water 
+GW_all<-select(GWgrab_chem_dat_allsites_PIVOT, siteID, sampleID, collectDate, Br, Ca, Cl, DIC, DOC, F, Fe, K, Mg, Mn, Na, 'NH4 - N',
+                'NO3+NO2 - N', pH, Si, SO4, TDP, TDS)
+
+GW_all<-na.omit(GW_all) # get rid of rows with NA, 298
+
+#replaces reported values below the detection limit with a value equal to half the detection limit
+#Bobby Hensley (9/28/2020) 
+GW_all$collectDate<-as.POSIXct(GW_all$collectDate,format="%m/%d/%Y %H:%M", tz="UTC")
+
+#' Replace Br non-dectects with half detection limit (0.010)
+for(i in 1:nrow(GW_all)){if(GW_all[i,4]<=0){GW_all[i,4]=0.005}}
+#' Replace Ca non-dectects with half detection limit (0.001)
+for(i in 1:nrow(GW_all)){if(GW_all[i,5]<=0){GW_all[i,5]=0.0005}}
+#' Replace Cl non-dectects with half detection limit (0.010)
+for(i in 1:nrow(GW_all)){if(GW_all[i,6]<=0){GW_all[i,6]=0.005}}
+#' Replace DIC non-dectects with half detection limit (0.100 prior to 2017-02-09, 0.025 after)
+changeDate<-as.POSIXct("02/09/2017 00:00",format="%m/%d/%Y %H:%M", tz="UTC")
+for(i in 1:nrow(GW_all)){if(GW_all[i,7]<=0){if(GW_all[i,3]<=changeDate){GW_all[i,7]=0.050}else{GW_all[i,7]=0.0125}}}
+#' Replace DIC non-dectects with half detection limit (0.100 prior to 2019-05-28, 0.970 after)
+changeDate<-as.POSIXct("05/28/2019 00:00",format="%m/%d/%Y %H:%M", tz="UTC")
+for(i in 1:nrow(GW_all)){if(GW_all[i,8]<=0){if(GW_all[i,3]<=changeDate){GW_all[i,8]=0.050}else{GW_all[i,8]=0.0485}}}
+#' Replace F non-dectects with half detection limit (0.010)
+for(i in 1:nrow(GW_all)){if(GW_all[i,9]<=0){GW_all[i,9]=0.005}}
+#' Replace Fe non-dectects with half detection limit (0.001)
+for(i in 1:nrow(GW_all)){if(GW_all[i,10]<=0){GW_all[i,10]=0.0005}}
+#' Replace K non-dectects with half detection limit (0.001)
+for(i in 1:nrow(GW_all)){if(GW_all[i,11]<=0){GW_all[i,11]=0.0005}}
+#' Replace Mg non-dectects with half detection limit (0.010)
+for(i in 1:nrow(GW_all)){if(GW_all[i,12]<=0){GW_all[i,12]=0.005}}
+#' Replace Mn non-dectects with half detection limit (0.001)
+for(i in 1:nrow(GW_all)){if(GW_all[i,13]<=0){GW_all[i,13]=0.0005}}
+#' Replace Na non-dectects with half detection limit (0.001)
+for(i in 1:nrow(GW_all)){if(GW_all[i,14]<=0){GW_all[i,14]=0.0005}}
+#' Replace NH4N non-dectects with half detection limit (0.020 prior to 2019-07-03, 0.004 after)
+changeDate<-as.POSIXct("05/28/2019 00:00",format="%m/%d/%Y %H:%M", tz="UTC")
+for(i in 1:nrow(GW_all)){if(GW_all[i,15]<=0){if(GW_all[i,3]<=changeDate){GW_all[i,15]=0.010}else{GW_all[i,15]=0.002}}}
+#' Replace NO3NO2 non-dectects with half detection limit (0.027)
+for(i in 1:nrow(GW_all)){if(GW_all[i,16]<=0){GW_all[i,16]=0.0135}}
+#' Replace Si non-dectects with half detection limit (0.010)
+for(i in 1:nrow(GW_all)){if(GW_all[i,18]<=0){GW_all[i,18]=0.005}}
+#' Replace SO4 non-dectects with half detection limit (0.010)
+for(i in 1:nrow(GW_all)){if(GW_all[i,19]<=0){GW_all[i,19]=0.005}}
+#' Replace TDP non-dectects with half detection limit (0.001)
+for(i in 1:nrow(GW_all)){if(GW_all[i,20]<=0){GW_all[i,20]=0.0005}}
+#' Replace TDS non-dectects with half detection limit (0.100)
+for(i in 1:nrow(GW_all)){if(GW_all[i,21]<=0){GW_all[i,21]=0.050}}
+
+#write file
+write.csv(GW_all, 'Data/groundwater_grab_allsites_QAQC.csv', row.names = FALSE)
 
 
 #####Discharge #######################################################################################################################
