@@ -1,38 +1,38 @@
-# PCA analysis 
+# PCA analysis code
 #Created by KK  March 30, 2020
 #Modified 6Aug2020 by JWEdmonds, 20Sep20  ## 
-#modified by KK on 13Sep2020; 28Sep 2020, Oct 5, 2020 
+#modified by KK on 13Sep2020; 28Sep 2020, Oct 5, 2020, Oct 14 
 #modified by JWE on 7Dec2020
 
 
 install.packages("factoextra") #install the package if you have not used it before
-install.packages(fmsb)
+install.packages('fmsb')
 install.packages("moments")
 install.packages("rcompanion")
 install.packages("REdaS")
 install.packages("parameters")
 install.packages("RNHANES")
 library(factoextra) #library for great visualization of PCA results
-library(FactoMineR) #library to perfomr PCA and HCPC clusters
-library(ggplot2)
+library(FactoMineR) #library to perform PCA and HCPC clusters
+library(ggplot2) #library for plotting 
 library(dplyr) #library for data maniupulation 
+library(agricolae) #library for skewness test
+library(rcompanion) #transformTukey function 
+library(parameters) # check KMO function 
+library(REdaS) # for Bartlett test of sphericity 
+library(car) #leveneTest
 library(corrplot)
 library(ggpubr)
 library(scales)
 library(viridis)  
 library(ggsci)
 library(gridExtra)
-install.packages("psych")
-library(psych)
 library(fmsb)
 library(ggpubr)
 library(moments)
-library(rcompanion)
-library(REdaS)
-library(parameters)
-library(car)
 library(tidyverse)
 library(RNHANES)
+
 ###################run PCA for surface water data with all sites #########################
 
 #bring in most recent data, QAQC and all sites updated Sep 28 
@@ -45,12 +45,13 @@ summary(SWgrab_allsites_dat$siteID)
 #Remove rows with na
 SWgrab_allsites_dat<-na.omit(SWgrab_allsites_dat) # rows where lab pH was not available (from 1504 to 1385)
 
-#Remove one crazy outlier value with a "bad" MN concentration
+#Remove one outlier value with a "bad" MN concentration
 SWgrab_allsites_dat<-(SWgrab_allsites_dat [-245, ])
 
 
 #Test of normality for each paramenter using Shapiro-Wilks test
-shapiro.test(SWgrab_allsites_dat$Ca)
+#values >0.5 are normal 
+shapiro.test(SWgrab_allsites_dat$transCa)
 shapiro.test(SWgrab_allsites_dat$Cl)
 shapiro.test(SWgrab_allsites_dat$DIC)
 shapiro.test(SWgrab_allsites_dat$DOC)
@@ -69,9 +70,9 @@ shapiro.test(SWgrab_allsites_dat$pH)
 
 
 #check data for skewness
-skewness(SWgrab_allsites_dat, na.rm = TRUE)
+skewness(SWgrab_allsites_dat$pH)
 
-#transform data and create a column for the transformed data
+#### transform data and create a column for the transformed data ####
 
 #Q-Q Plot is bent at top after transformation
 SWgrab_allsites_dat$transCa<-transformTukey(
@@ -279,47 +280,48 @@ skewness(SWgrab_allsites_dat, na.rm = TRUE)
 
 #create dataframe with just values for transformed data
 SWgrab_allsites_dat_trans<-select(SWgrab_allsites_dat, -c(Ca, Cl, DIC, DOC, F, Fe, K, Mg, Mn, Na, NH4N, NO3NO2N, Si, SO4, TDP))
-SWgrab_allsites_dat_trans_noFFeMnTDP<-select(SWgrab_allsites_dat, -c(Ca, Cl, DIC, DOC, F, Fe, K, Mg, Mn, Na, NH4N, NO3NO2N, Si, SO4, TDP, transF, transFe, transMn, transTDP))
-write.csv(SWgrab_allsites_dat_trans, 'Data/surface_water_TRANSPOSE.csv', row.names = FALSE)
 
-#run the Kaiser-Meyer-Olkin (KMO) Test
-#one method, checking both transformed and untransformed data
+#*run the Kaiser-Meyer-Olkin (KMO) Test - how suited the data are for factor analysis ####
+#values <0.6 are not adequate. Values >0.8 are ideal
+#checking both transformed and untransformed data
 check_kmo(SWgrab_allsites_dat [, -1])
 check_kmo(SWgrab_allsites_dat_trans [, -1])
-check_kmo(SWgrab_allsites_dat_trans_noFFeMnTDP [, -1])
 
-
-#Bartlett's Test Of Sphericity
+#*Bartlett's Test Of Sphericity tests the hypothesis that your correlation matrix is an identity matrix ####
+#values <0.05 indicate factor analysis is useful
 bart_spher(SWgrab_allsites_dat_trans [,-1], use = c("pairwise.complete.obs"))
-bartlett.test(SWgrab_allsites_dat_trans [,-1])
 
-bart_spher(SWgrab_allsites_dat_trans_noFFeMnTDP [,-1], use = c("pairwise.complete.obs"))
-bartlett.test(SWgrab_allsites_dat_trans_noFFeMnTDP [,-1])
+#*look at homogeneity variance  ####
+#transform to long format
+long<-pivot_longer(SWgrab_allsites_dat_trans, 
+                   cols= pH:transTDP,
+                   names_to = 'analyte', 
+                   values_to = 'value')
 
+#Levene's Test and Fligner-Killeen test of homogeneity of variance
+#Levene's test is statistically significant, then the null hypothesis, that the groups have equal variances, is rejected. i.e. you have unequal variances 
+car::leveneTest(value ~ analyte, data= long)
+fligner.test(value ~ analyte, data= long)
 
-#convert values to z-scores just to test influence on homogeneity of variance
-sw_transpose_scale<-scale(SWgrab_allsites_dat_trans)
-#export scaled data to change orientation of data in Excel, outside of R Statistic
-write.csv(SWgrab_allsites_dat_trans_scale,'Data/sw_transpose_scale.csv', row.names = FALSE)
-
-#bring in transformed data in long format, where "reduced" means F, Fe, Mn, and TDP was eliminated, and "scale" means data were converted to zscores
-sw_transpose_scale<-read.csv('Data/sw_transpose_scale.csv', header = TRUE)
-sw_transpose_scale_reduced<-read.csv('Data/sw_transpose_scale_reduced.csv', header = TRUE)
-sw_transpose<-read.csv('Data/surface_water_TRANSPOSED_AllVariables.csv', header = TRUE)
-sw_transpose_reduced<-read.csv('Data/surface_water_TRANSPOSED.csv', header = TRUE)
-
-#Levene's Test and Fligner-Killeen test of homogeneity of variance on imported dataset
-leveneTest(analyteConcentration ~ analyte, sw_transpose_scale_reduced)
-fligner.test(analyteConcentration ~ analyte, sw_transpose_scale_reduced)
+#convert values to z-scores and test homogeneity of variance
+scaled<- scale(SWgrab_allsites_dat_trans[,-1], scale=TRUE) #sample mean zero, and scaled to have sample standard deviation one.
+scaled<-as.data.frame(scaled)
+longscale<-pivot_longer(scaled, 
+                        cols= pH:transTDP,
+                        names_to = 'analyte', 
+                        values_to = 'value')
+longscale$analyte<-as.factor(longscale$analyte)
+car::leveneTest(value ~ analyte, data= longscale)
+fligner.test(value ~ analyte, data= longscale)
 
 #visualization of scatter in datasets
-ggplot(sw_transpose_scale, aes(x = analyte, y = analyteConcentration)) +
+ggplot(longscale, aes(x = analyte, y = value)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
   ggtitle("Transformed and Scaled values for each analyte")
 
 #Visual representation of variable's distribution
-ggdensity(SWgrab_allsites_dat_trans, x = "transTDP", fill = "lightgray", title = "Fe") +
+ggdensity(SWgrab_allsites_dat_trans, x = "pH", fill = "lightgray") +
   scale_x_continuous() +
   stat_overlay_normal_density(color = "red", linetype = "dashed")
 
@@ -337,7 +339,7 @@ ggdensity(SWgrab_allsites_dat_trans, x = "transTDP", fill = "lightgray", title =
       #                        droplevels()
                     
 
-#*run PCA ####
+##### run PCA ####
 allsites.pca_trans<-prcomp(SWgrab_allsites_dat_trans [, -1], scale=TRUE) #perform PCA without the siteID and without line 268, a CUPE site with outlier Mn value
 
 #alternative PCA command with retx=TRUE
@@ -407,19 +409,20 @@ print(round(var.coord[, 1:3], 3))
 pca_result_trans<-PCA(SWgrab_allsites_dat_trans[, -1], scale.unit = TRUE, graph=FALSE) # then data are scaled to unit variance
 allsites.hc_trans<-HCPC(pca_result_trans, graph = TRUE) #can click on where to cut graph
 
-fviz_dend(allsites.hc_trans, 
+# makes dendrogram figure - takes a bit to compute
+dendrogram_figure<-fviz_dend(allsites.hc_trans, 
           show_labels = FALSE,                     # Label size
-          palette = "jco",               # Color palette see ?ggpubr::ggpar
+          palette = "nejm",               # Color palette see ?ggpubr::ggpar
           rect = TRUE, rect_fill = TRUE, # Add rectangle around groups
-          rect_border = "jco"           # Rectangle color
+          rect_border = "nejm"           # Rectangle color
           #labels_track_height = 0.8      # Augment the room for labels
 )
 
-#make a color pallete 
+#shows the clusters 
 fviz_cluster(allsites.hc_trans,
              repel = FALSE,            #  label overlapping
              show.clust.cent = TRUE, # Show cluster centers
-             palette = "jco",         # Color palette see ?ggpubr::ggpar
+             palette = "nejm",         # Color palette see ?ggpubr::ggpar
              ggtheme = theme_minimal()
 )
 
@@ -439,13 +442,11 @@ allsites.hc_trans$desc.ind$para
 #find out what sites are in each cluster
 frequency_clust_trans<-rename(count(clusters_trans, clust, siteID), Freq = n)
 
-
 #new figure 
-fviz_pca_ind(allsites.hc_trans, label="none", 
+cluster_figure<-fviz_pca_ind(pca_result_trans, label="none", 
              habillage=clusters_trans$clust,  # group by cluster
-             addEllipses=FALSE ,
-             palette = c("#F6Be00", "darkblue", "#F6Be00",  "#552586", "grey", "darkgreen", "darkred"), 
-             title = "surface water")
+             addEllipses=TRUE ,
+             palette = "nejm")
 
 
 cowplot::save_plot("Figures/vectors.png", Figure_vectors, base_width = 7,
@@ -468,6 +469,8 @@ cowplot::save_plot("Figures/vectors.png", Figure_vectors, base_width = 7,
 
 #### trying to figure out varimax rotation #### 
 #using a package called "psych"
+#install.packages("psych")
+library(psych)
 #rotation 
 pc <- psych::principal(SWgrab_allsites_dat[, -1], 4,rotate="varimax") #have to chose the # of components to extract 
 print(pc$scores[1:5,])  # Scores returned by principal()
