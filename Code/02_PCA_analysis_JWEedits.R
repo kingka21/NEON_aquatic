@@ -51,7 +51,7 @@ SWgrab_allsites_dat<-(SWgrab_allsites_dat [-245, ])
 
 #Test of normality for each paramenter using Shapiro-Wilks test
 #values >0.5 are normal 
-shapiro.test(SWgrab_allsites_dat$transCa)
+shapiro.test(SWgrab_allsites_dat$Ca)
 shapiro.test(SWgrab_allsites_dat$Cl)
 shapiro.test(SWgrab_allsites_dat$DIC)
 shapiro.test(SWgrab_allsites_dat$DOC)
@@ -346,10 +346,10 @@ allsites.pca_trans<-prcomp(SWgrab_allsites_dat_trans [, -1], scale=TRUE) #perfor
 allsites.pca_trans_ROTATE<-prcomp(SWgrab_allsites_dat_trans[, -1], retx=TRUE, scale=TRUE)
 
 #rotation 
-rawLoadings     <- allsites.pca$rotation[,1:4] %*% diag(allsites.pca$sdev, 4, 4)
-rotatedLoadings <- varimax(rawLoadings)$loadings
-scores <- scale(allsites.pca$x[,1:4]) %*% varimax(rawLoadings)$rotmat
-print(scores[1:5,])  
+#rawLoadings     <- allsites.pca$rotation[,1:4] %*% diag(allsites.pca$sdev, 4, 4)
+#rotatedLoadings <- varimax(rawLoadings)$loadings
+#scores <- scale(allsites.pca$x[,1:4]) %*% varimax(rawLoadings)$rotmat
+#print(scores[1:5,])  
 
 #eigenvalues
 fviz_eig(allsites.pca_trans)  ###eigen values associated with each PC (how much does each explain the variation in the data)
@@ -414,9 +414,8 @@ dendrogram_figure<-fviz_dend(allsites.hc_trans,
           show_labels = FALSE,                     # Label size
           palette = "nejm",               # Color palette see ?ggpubr::ggpar
           rect = TRUE, rect_fill = TRUE, # Add rectangle around groups
-          rect_border = "nejm"           # Rectangle color
-          #labels_track_height = 0.8      # Augment the room for labels
-)
+          rect_border = "nejm" ,          # Rectangle color
+          title = '')
 
 #shows the clusters 
 fviz_cluster(allsites.hc_trans,
@@ -442,14 +441,26 @@ allsites.hc_trans$desc.ind$para
 #find out what sites are in each cluster
 frequency_clust_trans<-rename(count(clusters_trans, clust, siteID), Freq = n)
 
-#new figure 
+#new figure for drawing ellipses by groups 
 cluster_figure<-fviz_pca_ind(pca_result_trans, label="none", 
              habillage=clusters_trans$clust,  # group by cluster
              addEllipses=TRUE ,
-             palette = "nejm")
+             palette = "nejm", 
+             title = '') +  
+             theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+                   panel.background = element_blank(), 
+                   axis.line = element_line(colour = "black"), 
+                   legend.position = "top",  legend.box = "horizontal") + 
+            xlab("Component 1 (35.2%)") + 
+            ylab(" Component 2 (12.4%)")  
+  
+             
+#cluster_figure +  guides(palette = guide_legend(nrow = 1))
 
-
-cowplot::save_plot("Figures/vectors.png", Figure_vectors, base_width = 7,
+Fig3<-cowplot::plot_grid(cluster_figure, dendrogram_figure,
+                         labels = c("a", "b")
+)
+cowplot::save_plot("Figures/Fig3.png", Fig3, base_width = 8,
                    base_height = 4, dpi=600)
 
 
