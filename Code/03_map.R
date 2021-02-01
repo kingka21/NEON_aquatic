@@ -13,7 +13,7 @@ poly<-readOGR(dsn = "/Users/katelynking/Desktop/NEON_Domains", layer = "NEON_Dom
 crs(poly) #shows me the projection of the shapefiles so that I can project the same to the points 
 
 #read in lat/lon of points 
-sites<-read.csv("/Data/neon_sites_latlon.csv")
+sites<-read.csv("Data/neon_sites_latlon.csv")
 sites$group<-as.factor(sites$group)
 
 ## points over NEON domains map 
@@ -95,12 +95,13 @@ contig_plot<-ggplot(contig_sites, aes(x=lon,y=lat))+
   coord_sf(xlim = c(-129, -65), #change the extent to map and zoom in on contiguous US
            ylim = c(20, 50)) + 
   north( x.min = -129, x.max=-65, y.min = 20, y.max=50, symbol=3, scale=.1, location = "topright", anchor = c(x = -63, y = 50) ) + # anchor can change location
-  ggsn::scalebar(dist = 500, dist_unit= "km", transform = TRUE, model = "WGS84", location = "topleft", st.size = 2,
+  ggsn::scalebar(dist = 500, dist_unit= "km", transform = TRUE, model = "WGS84", location = "topleft", anchor = c(x = -129, y = 50.5), st.size = 2,
                  x.min = -129, x.max=-65, y.min = 20, y.max=50)
 
 # ALASKA MAP
 al_plot<-ggplot(AL_sites, aes(x=lon,y=lat))+
-  geom_point(aes(colour=group), size=2) +
+  geom_point(aes(colour=group, shape=group), size=4) +
+  scale_shape_manual(values=c(1,4)) +
   geom_path(data= poly_AL_sp, aes(long,lat,group=group),colour='black', size=0.2) + coord_equal() +
   scale_color_manual(values=c("#BC3C29FF", "#20854EFF"))+
   theme_bw() + 
@@ -110,14 +111,86 @@ al_plot<-ggplot(AL_sites, aes(x=lon,y=lat))+
         axis.line = element_blank(),
         axis.ticks = element_blank(),
         panel.grid = element_blank()) + 
-  ggsn::scalebar(dist = 500, dist_unit= "km", transform = TRUE, model = "WGS84", location = "bottomright", st.size = 2, st.dist = 0.03, border.size = 0.5,
-                 x.min = -170, x.max=-140, y.min = 55, y.max=75)
+  coord_sf(xlim = c(-170, -139), #change the extent to map 
+           ylim = c(55, 75)) +
+  ggsn::scalebar(dist = 500, dist_unit= "km", transform = TRUE, model = "WGS84", location = "bottomright",  anchor = c(x = -141, y = 56), st.size = 1.5, st.dist = 0.04, border.size = 0.5,
+                 x.min = -170, x.max=-139, y.min = 55, y.max=75)
 
 
   
 # Puerto Rico MAP
 pr_plot<-ggplot(PR_sites, aes(x=lon,y=lat))+
-  geom_point(aes(colour=group), size=2) +
+  geom_point(aes(colour=group, shape=group), size=4) +
+  scale_shape_manual(values=c(5)) +
+  geom_path(data= poly_PR_sp, aes(long,lat,group=group),colour='black', size=0.2) + coord_equal() +
+  scale_color_manual(values=c("#7876B1FF")) +
+  theme_bw() +
+ theme(legend.position = "none", 
+        axis.title = element_blank(), 
+        axis.text = element_blank(),
+        axis.line = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank()) + 
+  coord_sf(xlim = c(-67.4, -65.5), #change the extent to map 
+           ylim = c(17.8, 18.6)) +
+  ggsn::scalebar(dist = 50, dist_unit= "km", transform = TRUE, model = "WGS84", location = "bottomright", anchor = c(x = -65.6, y = 17.9), st.size = 1.5, st.dist = 0.06, border.size = 0.25,
+                 x.min = -67.4, x.max=-65.5, y.min = 17.8, y.max=18.5)
+
+# inset map with symbols 
+inset_map<-ggdraw() +
+  draw_plot(contig_plot) +
+  draw_plot(al_plot, x = 0.07, y = 0.22, width = 0.25, height = 0.25) + 
+  draw_plot(pr_plot, x = 0.68, y = 0.25, width = 0.2, height = 0.25)
+
+inset_map
+ggsave(filename = "inset_map.png", 
+       plot = inset_map,
+       path = "Figures/", 
+       width = 7, 
+       height = 4,
+       dpi = 150)
+
+### map with colors only ####
+# CONTIG MAP
+contig_plot<-ggplot(contig_sites, aes(x=lon,y=lat))+
+  geom_point(aes(colour=group), size=4) +
+  geom_point(shape=1, size=4,colour = "black") +
+  geom_path(data= poly_contig_sp, aes(long,lat,group=group),colour='black', size=0.2) + coord_equal() +
+  scale_color_manual(values=c("#BC3C29FF", "#0072B5FF", "#E18727FF", "#20854EFF", "#7876B1FF", "#6F99ADFF", "#FFDC91FF"),
+                     name='group')+
+  theme_bw() +
+  theme(panel.grid = element_blank()) + 
+  guides(color = guide_legend(override.aes = list(size=3))) + #increase legend point size
+  coord_sf(xlim = c(-129, -65), #change the extent to map and zoom in on contiguous US
+           ylim = c(20, 50)) + 
+  north( x.min = -129, x.max=-65, y.min = 20, y.max=50, symbol=3, scale=.1, location = "topright", anchor = c(x = -63, y = 50) ) + # anchor can change location
+  ggsn::scalebar(dist = 500, dist_unit= "km", transform = TRUE, model = "WGS84", location = "topleft", anchor = c(x = -129, y = 50.5), st.size = 2,
+                 x.min = -129, x.max=-65, y.min = 20, y.max=50)
+
+# ALASKA MAP
+al_plot<-ggplot(AL_sites, aes(x=lon,y=lat))+
+  geom_point(aes(colour=group), size=4) +
+  geom_point(shape=1, size=4,colour = "black") +
+  geom_path(data= poly_AL_sp, aes(long,lat,group=group),colour='black', size=0.2) + coord_equal() +
+  scale_color_manual(values=c("#BC3C29FF", "#20854EFF"))+
+  theme_bw() + 
+  theme(legend.position = "none", 
+        axis.title = element_blank(), 
+        axis.text = element_blank(),
+        axis.line = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank()) + 
+  coord_sf(xlim = c(-170, -139), #change the extent to map 
+           ylim = c(55, 75)) +
+  ggsn::scalebar(dist = 500, dist_unit= "km", transform = TRUE, model = "WGS84", location = "bottomright",  anchor = c(x = -141, y = 56), st.size = 1.5, st.dist = 0.04, border.size = 0.5,
+                 x.min = -170, x.max=-139, y.min = 55, y.max=75)
+
+
+
+# Puerto Rico MAP
+pr_plot<-ggplot(PR_sites, aes(x=lon,y=lat))+
+  geom_point(aes(colour=group), size=4) +
+  geom_point(shape=1, size=4,colour = "black") +
   geom_path(data= poly_PR_sp, aes(long,lat,group=group),colour='black', size=0.2) + coord_equal() +
   scale_color_manual(values=c("#7876B1FF")) +
   theme_bw() +
@@ -127,22 +200,21 @@ pr_plot<-ggplot(PR_sites, aes(x=lon,y=lat))+
         axis.line = element_blank(),
         axis.ticks = element_blank(),
         panel.grid = element_blank()) + 
-  coord_sf(xlim = c(-67.4, -65.5), #change the extent to map and zoom in on contiguous US
-           ylim = c(17.8, 18.5)) +
-  ggsn::scalebar(dist = 20, dist_unit= "km", transform = TRUE, model = "WGS84", location = "bottomright", anchor = c(x = -65.5, y = 17.9), st.size = 2, st.dist = 0.04, border.size = 0.5,
+  coord_sf(xlim = c(-67.4, -65.5), #change the extent to map 
+           ylim = c(17.8, 18.6)) +
+  ggsn::scalebar(dist = 50, dist_unit= "km", transform = TRUE, model = "WGS84", location = "bottomright", anchor = c(x = -65.6, y = 17.9), st.size = 1.5, st.dist = 0.06, border.size = 0.25,
                  x.min = -67.4, x.max=-65.5, y.min = 17.8, y.max=18.5)
 
-# inset map 
-inset_map<-ggdraw() +
+# inset map with symbols 
+inset_map_colors<-ggdraw() +
   draw_plot(contig_plot) +
-  draw_plot(al_plot, x = 0.07, y = 0.27, width = 0.25, height = 0.25) + 
+  draw_plot(al_plot, x = 0.07, y = 0.22, width = 0.25, height = 0.25) + 
   draw_plot(pr_plot, x = 0.68, y = 0.25, width = 0.2, height = 0.25)
 
-inset_map
-ggsave(filename = "inset_map.png", 
-       plot = inset_map,
+inset_map_colors
+ggsave(filename = "inset_map_colors.png", 
+       plot = inset_map_colors,
        path = "Figures/", 
        width = 7, 
-       height = 6,
+       height = 4,
        dpi = 150)
-
