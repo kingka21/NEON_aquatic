@@ -24,6 +24,22 @@
 #   Kaelin M. Cawley (2017-12-07)
 #     original creation
 ##############################################################################################
+#####Discharge #######################################################################################################################
+
+#get discharge data for focus 10 focus sites (+3 replacement sites), taken manually 
+discharge_grab_subsetFINAL <- loadByProduct(dpID="DP1.20048.001", 
+                                            site=c( 'KING','MAYF','COMO',"HOPB","WALK", "MART", "BLUE", "ARIK", "TOMB", "CUPE","GUIL","POSE","BLWA"),
+                                            startdate="2017-01", 
+                                            enddate="2019-12", 
+                                            package="expanded", #basic will just give you concentrations, #expanded will give you flags 
+                                            check.size = F)  ### check the size of the file before you download it 
+
+for(i in 1:length(discharge_grab_subsetFINAL)) {assign(names(discharge_grab_subsetFINAL)[i], discharge_grab_subsetFINAL[[i]])}   #calls the table waq_instances
+discharge_subsetFINAL<-as.data.frame(dsc_individualFieldData) #table that has all measurements for discharge
+stage_subsetFINAL<-as.data.frame(dsc_fieldData)#table tht has stage readings from field
+
+#These dataframes are Level 1 data, need to convert to Level 2 data using conv.calc.Q function before using in further analyses# 
+
 #convert dataframes generated from download to names used in this function#
 stageData<-stage_subsetFINAL
 dischargeData<-discharge_subsetFINAL
