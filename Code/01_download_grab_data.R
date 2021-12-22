@@ -1,8 +1,6 @@
 #### Script for downloading and organizing NEON datasets
-### code created by Katelyn King 16-OCT-2019, modified by KK on Sep28 
+### code created by Katelyn King 16-OCT-2019 and modified by Jennifer Edmonds 
 ### code adapted from Bobby Hensley 
-###Modified by Jennifer Edmonds 21Sep2020
-
 
 #### load libraries ####
 # install neonUtilities if you have not already 
@@ -15,7 +13,7 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 
-#### load datasets ####
+#### load data sets ####
 ## avg: "all" to download all data (default), or number of minutes in the averaging interval. 
 ##      only applicable to IS data.
 

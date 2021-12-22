@@ -1,5 +1,6 @@
 
 #### Graphing for exploring variation across sites (spatial) #### 
+##written by Katelyn King and modified by Jennifer Edmonds 
 #graph bar plot with error bars 
 SWgrab_dat<-read.csv('Data/surface_water_grab_QCQC_ph.csv', header = TRUE)
 

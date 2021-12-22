@@ -1,5 +1,5 @@
 # PCA analysis code #
-#Created by KKing March 30, 2020
+#Created by Katelyn King March 30, 2020
 #Modified by JWEdmonds  
 
 #### Install packages and load libraries ####
