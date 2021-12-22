@@ -2,7 +2,7 @@
 This repository uses NEON data to provide case studies that examine spatial patterns and temporal variability in stream water chemistry as well as predictions of the River Continuum Concept, including metabolism, carbon chemistry, and macroinvertebrate community composition.   
 
 
-The code supports all analyses in the manuscript **Jennifer W. Edmonds, Katelyn King, Merrie Beth Neely, Robert Hensley, Keli J. Goodman, and Kaelin Cawley. Using large, open-datasets to understand spatial and temporal patterns in lotic ecosystems: NEON case studies. Ecosphere. ** 
+The code supports all analyses in the manuscript **Jennifer W. Edmonds, Katelyn King, Merrie Beth Neely, Robert Hensley, Keli J. Goodman, and Kaelin Cawley. Using large, open-datasets to understand spatial and temporal patterns in lotic ecosystems: NEON case studies. Ecosphere.**   
 
 
 **The 'Code' folder includes the following:**  
