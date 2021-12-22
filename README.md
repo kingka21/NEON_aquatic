@@ -6,7 +6,7 @@ The code supports all analyses in the manuscript  **Jennifer W. Edmonds, Katelyn
 
 
 **The 'Code' folder includes the following:**  
-**01_download_grab_data.R** that includes methods for downloading the stream surface water chemistry grab sample data 
+**01_download_grab_data.R** that includes methods for downloading the stream surface water chemistry grab sample data  
 **02_plot_surfacewater_averages.R** that includes methods for plotting and investigating water chemistry average concentrations   
 **03_PCA_analysis.R** that includes methods for the PCA and HCA analysis that are presented in case study 1  
 **04_discharge_converstion_level1to2.R** that includes methods for converting the level 1 discharge measures to level 2 discharge   
